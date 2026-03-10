@@ -48,3 +48,9 @@ Repository: <https://github.com/olegische/APSIX>
 
 The local Internet-Draft package `draft-romanchuk-apsix-00` is prepared for
 public release and IETF submission when the submission window reopens.
+
+## Archival Links
+
+- GitHub Release: <https://github.com/olegische/APSIX/releases/tag/apsix-draft-00-2026-03-10>
+- Internet Archive snapshot of repository: <https://web.archive.org/web/20260310130341/https://github.com/olegische/APSIX>
+- Internet Archive snapshot of raw Internet-Draft text: <https://web.archive.org/web/20260310130637/https://raw.githubusercontent.com/olegische/APSIX/main/spec/draft-romanchuk-apsix-00.txt>
