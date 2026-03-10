@@ -1,0 +1,789 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- name="GENERATOR" content="github.com/mmarkdown/mmark Mmark Markdown Processor - mmark.miek.nl" -->
+<rfc version="3" ipr="trust200902" docName="draft-romanchuk-apsix-00" submissionType="independent" category="info" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" indexInclude="true">
+
+<front>
+<title abbrev="APSIX">APSIX: Minimal Primitive Contract for Portable Semantic Runtimes</title><seriesInfo value="draft-romanchuk-apsix-00" stream="independent" status="informational" name="Internet-Draft"></seriesInfo>
+<author initials="O." surname="Romanchuk" fullname="Oleg Romanchuk"><organization>Independent</organization><address><postal><street></street>
+</postal><email>olromanchuk@gmail.com</email>
+</address></author><date/>
+<area>Internet</area>
+<workgroup></workgroup>
+
+<abstract>
+<t>This document proposes <strong>APSIX</strong> (<em>Agent Portable Semantic Interface eXtension</em>) as a minimal primitive contract for portable semantic runtimes. The goal is not to standardize agent personalities, prompt formats, planner graphs, or model-specific reasoning behavior. The goal is to standardize the smallest useful contract of the runtime environment itself.</t>
+<t>The design reflects runtime patterns observed in early governed semantic-runtime implementations. In those implementations, the primary managed resource is bounded semantic territory, and spawned actor populations are the main source of pressure on that resource. APSIX defines the lower-layer contract required for such runtimes to become portable across implementations.</t>
+<t>The contract is intentionally narrow. It standardizes logical objects, lifecycle primitives, membrane-mediated decisions, capability semantics, event and provenance requirements, replay obligations, and progressive compliance profiles. It does not standardize model internals, scheduling strategies, storage engines, user interfaces, or application-specific orchestration logic.</t>
+<t>The document is written to stand on its own as a self-contained runtime specification, without dependency on unpublished external framing.</t>
+<t>This is a draft specification, not a final standard. The current name is provisional; the technical target is a portable primitive surface for governed semantic runtimes.</t>
+<t>This document is intended as a <strong>research specification</strong>, not as an immediate industry standardization proposal. Its purpose is to define a portability target early enough that emerging runtime implementations do not harden around mutually incompatible framework-local abstractions before a shared primitive vocabulary exists.</t>
+</abstract>
+
+</front>
+
+<middle>
+
+<section anchor="introduction"><name>Introduction</name>
+<t>Agent runtimes are currently fragmented across framework-local abstractions. One system centers graphs, another centers conversations, another centers workflow automation, and another centers tool loops around a planner-worker core. This fragmentation weakens portability because applications depend on framework-specific object models rather than on a stable environment contract.</t>
+<t>The design intent of APSIX is analogous in spirit to the role POSIX played for operating systems: not to prescribe every implementation detail, but to standardize a small enough primitive surface that higher-level software can become portable across runtimes.</t>
+<t>The analogy to POSIX is aspirational in scope, not historical in maturity. The present ecosystem is still early. The purpose of this document is therefore not to claim that semantic runtimes have already converged enough for final standardization, but to provide a research-grade contract that implementations can target, compare against, and refine.</t>
+<t>The conceptual shift is:</t>
+
+<ul spacing="compact">
+<li>classical POSIX standardized process, file, and I/O primitives;</li>
+<li>APSIX standardizes zone, membrane, artifact, and replay primitives for semantic runtimes.</li>
+</ul>
+<t>The spec is derived from three commitments already stabilized in early governed semantic-runtime experimentation:</t>
+
+<ol spacing="compact">
+<li>the runtime manages <strong>semantic territory</strong> rather than only tasks or model calls;</li>
+<li>expansion pressure comes from <strong>spawned actor populations</strong>;</li>
+<li>governability depends on <strong>non-bypassable membrane mediation</strong>, <strong>durable artifact admission</strong>, and <strong>replayable authoritative state</strong>.</li>
+</ol>
+<t>APSIX treats control of spawn-driven semantic epidemics as a core runtime concern. This document does not yet mandate one universal epidemic-control algorithm for all runtimes or all partition regimes. Instead, APSIX standardizes the governance surface and invariants through which within-partition and cross-partition expansion must be admitted, bounded, observed, and reconstructed. Different runtimes may implement this surface through single-writer regimes, bounded speculative swarms, hierarchical descendant spawning, merge selection, quarantine, culling, or other control strategies, provided those strategies remain membrane-governed, budget-visible, locality-scoped, and replayable.</t>
+
+<section anchor="scope"><name>Scope</name>
+<t>This document defines:</t>
+
+<ul spacing="compact">
+<li>a core object model for portable semantic runtimes;</li>
+<li>a minimal primitive set derived from runtime lifecycle;</li>
+<li>capability permissions and locality semantics;</li>
+<li>membrane and budget semantics;</li>
+<li>cross-boundary effect admission semantics;</li>
+<li>event, provenance, and replay requirements;</li>
+<li>compliance profiles.</li>
+</ul>
+<t>This document does not define:</t>
+
+<ul spacing="compact">
+<li>prompt formats or chain-of-thought conventions;</li>
+<li>agent reasoning methods;</li>
+<li>model selection and vendor APIs;</li>
+<li>storage backends;</li>
+<li>scheduling algorithms;</li>
+<li>UI conventions;</li>
+<li>planner-specific orchestration graphs.</li>
+</ul>
+</section>
+
+<section anchor="intended-use"><name>Intended Use</name>
+<t>APSIX is intended to serve as:</t>
+
+<ul spacing="compact">
+<li>a portability target for experimental semantic runtime implementations;</li>
+<li>a comparison layer across framework-local runtimes;</li>
+<li>a basis for future conformance tests around membrane, provenance, replay behavior, and lifecycle-trace invariants.</li>
+</ul>
+<t>It is not yet intended to serve as:</t>
+
+<ul spacing="compact">
+<li>a finalized industry interoperability standard;</li>
+<li>a replacement for existing agent SDK APIs;</li>
+<li>a mandate on internal scheduler or storage architecture.</li>
+</ul>
+</section>
+
+<section anchor="design-goals"><name>Design Goals</name>
+<t>The design goals are:</t>
+
+<ol spacing="compact">
+<li><strong>Portability</strong>: applications should rely on runtime primitives that survive framework changes.</li>
+<li><strong>Governability</strong>: the runtime must expose an enforcement locus for spawn, refinement, anchoring, and cross-boundary effects.</li>
+<li><strong>Observability</strong>: the runtime must emit stable records of semantic expansion and state transitions.</li>
+<li><strong>Minimality</strong>: the primitive set should be small enough to implement and reason about.</li>
+<li><strong>Replayability</strong>: authoritative state must be reconstructible without reproducing original latent reasoning traces.</li>
+<li><strong>Extensibility</strong>: richer runtimes should be able to add features without breaking core semantics.</li>
+<li><strong>Epidemic Control Extensibility</strong>: the contract should support multiple partition-local spawn-control algorithms without losing governability or replay semantics.</li>
+</ol>
+</section>
+</section>
+
+<section anchor="conformance-language-and-terminology"><name>Conformance Language and Terminology</name>
+<t>The key words <bcp14>MUST</bcp14>, <bcp14>MUST NOT</bcp14>, <bcp14>REQUIRED</bcp14>, <bcp14>SHALL</bcp14>, <bcp14>SHALL NOT</bcp14>,
+<bcp14>SHOULD</bcp14>, <bcp14>SHOULD NOT</bcp14>, <bcp14>RECOMMENDED</bcp14>, <bcp14>NOT RECOMMENDED</bcp14>, <bcp14>MAY</bcp14>, and
+<bcp14>OPTIONAL</bcp14> in this document are to be interpreted as described in BCP 14
+[RFC2119] [RFC8174] when, and only when, they appear in all capitals, as shown
+here.</t>
+
+<section anchor="core-terms"><name>Core Terms</name>
+<t><strong>Domain</strong>: a bounded semantic representation that supports localization, refinement, anchoring, and harvest.</t>
+<t><strong>Zone</strong>: the runtime embodiment of a domain, including state, policy, budgets, partitions, and artifacts.</t>
+<t><strong>Partition</strong>: a bounded sub-zone scope that defines the default unit of locality and refinement.</t>
+<t><strong>Actor</strong>: a spawned runtime instance operating under a capability mask and budget share.</t>
+<t><strong>Artifact</strong>: a produced object that can be retained, validated, rejected, anchored, or harvested.</t>
+<t><strong>Anchor</strong>: the promotion of an artifact into durable authoritative runtime state.</t>
+<t><strong>Membrane</strong>: the enforcement boundary around a zone and its sensitive state transitions.</t>
+<t><strong>Budget</strong>: an explicit bound on expansion, actor creation, artifact volume, validation cost, or other governed quantities.</t>
+<t><strong>Run</strong>: a concrete execution attempt or recovery/harvest attempt associated with an actor or task scope and having a terminal outcome.</t>
+<t><strong>Replay</strong>: authoritative reconstruction of zone state from events, anchors, and checkpoints; not reproduction of token-level reasoning.</t>
+<t><strong>Harvest</strong>: a runtime operation that returns anchored outputs from a zone.</t>
+<t><strong>Effect</strong>: an external or cross-boundary action whose primary result is not only a local artifact, but a mutation, publication, delivery, or other action against another authority boundary.</t>
+<t><strong>Spawn Regime</strong>: an implementation-defined policy governing the propagation dynamics of actor creation within a zone or partition, including concurrency limits, descendant spawning rules, competition, throttling, quarantine, merge, or termination behavior.</t>
+<t><strong>Ledger Manifest</strong>: a stable description of the replay-relevant ledger surfaces for a zone, including schema versions, runtime profile, measurement convention, and record paths.</t>
+</section>
+</section>
+
+<section anchor="object-model"><name>Object Model</name>
+<t>An APSIX-compliant runtime MUST expose the following logical objects.</t>
+<t>These objects define logical runtime state, not a mandated storage substrate. Implementations MAY represent them using graphs, databases, event streams, logs, or other internal structures, provided the normative semantics of the contract remain observable.</t>
+
+<section anchor="zone"><name>Zone</name>
+<t>A zone MUST have at least:</t>
+
+<ul spacing="compact">
+<li><tt>zone_id</tt></li>
+<li><tt>domain_spec</tt></li>
+<li><tt>lifecycle_state</tt></li>
+<li><tt>membrane_policy_version</tt></li>
+<li><tt>budget_state</tt></li>
+<li><tt>partition_state</tt></li>
+<li><tt>authoritative_state_ref</tt></li>
+</ul>
+<t>In <tt>APSIX-governed</tt> and <tt>APSIX-replayable</tt>, a zone SHOULD additionally expose:</t>
+
+<ul spacing="compact">
+<li><tt>output_boundary_ref</tt> or equivalent authoritative harvest target surface</li>
+<li><tt>ledger_state</tt></li>
+<li><tt>ledger_manifest_ref</tt>, if a separate manifest object is used</li>
+</ul>
+<t>Optional implementation fields MAY include ownership metadata, external bindings, topology hints, or storage references.</t>
+<t><tt>authoritative_state_ref</tt> denotes the runtime's single authoritative execution state for the zone. Implementations MAY expose dashboards, plans, manifests, or other operator-facing projections, but such projections MUST NOT function as independent control planes with authority to diverge from authoritative zone state.</t>
+</section>
+
+<section anchor="partition"><name>Partition</name>
+<t>A partition MUST have at least:</t>
+
+<ul spacing="compact">
+<li><tt>partition_id</tt></li>
+<li><tt>zone_id</tt></li>
+<li><tt>scope_ref</tt></li>
+<li><tt>status</tt></li>
+</ul>
+<t>The runtime MAY materialize partitions explicitly or derive them from a structured domain substrate, but partition identity and locality semantics MUST be observable.</t>
+</section>
+
+<section anchor="actor"><name>Actor</name>
+<t>An actor MUST have at least:</t>
+
+<ul spacing="compact">
+<li><tt>actor_id</tt></li>
+<li><tt>zone_id</tt></li>
+<li><tt>admitted_partitions</tt></li>
+<li><tt>capability_mask</tt></li>
+<li><tt>budget_share</tt></li>
+<li><tt>intent</tt></li>
+<li><tt>status</tt></li>
+</ul>
+<t>An actor MAY be ephemeral or persistent.</t>
+</section>
+
+<section anchor="run"><name>Run</name>
+<t>A run MUST have at least:</t>
+
+<ul spacing="compact">
+<li><tt>run_id</tt></li>
+<li><tt>zone_id</tt></li>
+<li><tt>request_id</tt></li>
+<li><tt>run_kind</tt></li>
+<li><tt>status</tt></li>
+<li><tt>started_at</tt></li>
+<li><tt>ended_at</tt> or equivalent terminal timestamp</li>
+</ul>
+<t>If the runtime associates runs with an actor or partition-local task, it MUST expose that binding.</t>
+<t>Run kinds MUST distinguish at minimum:</t>
+
+<ul spacing="compact">
+<li><tt>execution_run</tt></li>
+<li><tt>recovery_run</tt>, if recovery is supported</li>
+<li><tt>harvest_run</tt>, if harvest materializes execution-like work</li>
+</ul>
+</section>
+
+<section anchor="artifact"><name>Artifact</name>
+<t>An artifact MUST have at least:</t>
+
+<ul spacing="compact">
+<li><tt>artifact_id</tt> or provisional identifier</li>
+<li><tt>origin_actor_id</tt></li>
+<li><tt>zone_id</tt></li>
+<li><tt>artifact_type</tt></li>
+<li><tt>status</tt></li>
+<li><tt>provenance</tt></li>
+</ul>
+<t>Artifact statuses MUST distinguish at least:</t>
+
+<ul spacing="compact">
+<li><tt>generated</tt></li>
+<li><tt>anchored</tt></li>
+<li><tt>harvested</tt></li>
+<li><tt>rejected</tt></li>
+</ul>
+</section>
+
+<section anchor="anchor-record"><name>Anchor Record</name>
+<t>An anchored artifact MUST have an associated anchor record containing at least:</t>
+
+<ul spacing="compact">
+<li><tt>anchor_id</tt></li>
+<li><tt>artifact_id</tt></li>
+<li><tt>zone_id</tt></li>
+<li><tt>policy_version</tt></li>
+<li><tt>decision</tt></li>
+<li><tt>timestamp_or_order</tt></li>
+</ul>
+</section>
+
+<section anchor="membrane-decision-record"><name>Membrane Decision Record</name>
+<t>A membrane-mediated decision MUST have an auditable decision record containing at least:</t>
+
+<ul spacing="compact">
+<li><tt>decision_id</tt></li>
+<li><tt>request_id</tt></li>
+<li><tt>zone_id</tt></li>
+<li><tt>request_type</tt></li>
+<li><tt>subject_ref</tt></li>
+<li><tt>decision</tt></li>
+<li><tt>policy_version</tt></li>
+<li><tt>reason_code</tt></li>
+<li><tt>capability_basis</tt></li>
+<li><tt>budget_context</tt></li>
+<li><tt>timestamp_or_order</tt></li>
+</ul>
+</section>
+
+<section anchor="membrane-policy"><name>Membrane Policy</name>
+<t>A membrane policy MUST define:</t>
+
+<ul spacing="compact">
+<li>spawn admissibility rules</li>
+<li>within-partition population-control rules, if multiple actors per partition are supported</li>
+<li>refinement admissibility rules</li>
+<li>cross-zone and cross-partition effect rules</li>
+<li>external effect admission rules</li>
+<li>artifact promotion rules</li>
+<li>escalation rules</li>
+<li>budget interaction rules</li>
+<li>epidemic-control rules such as throttling, quarantine, culling, merge, or equivalent growth-control behavior, if such controls are supported</li>
+</ul>
+</section>
+
+<section anchor="event"><name>Event</name>
+<t>The runtime MUST produce an event stream or event log containing at least:</t>
+
+<ul spacing="compact">
+<li>zone creation</li>
+<li>actor admission request and decision</li>
+<li>refinement event</li>
+<li>execute completion or failure</li>
+<li>external effect request, decision, completion, or failure, if such effects are supported</li>
+<li>anchor decision</li>
+<li>harvest event</li>
+<li>freeze or closure event</li>
+</ul>
+<t>Each event record MUST expose at least:</t>
+
+<ul spacing="compact">
+<li><tt>event_id</tt></li>
+<li><tt>seq_no</tt> or equivalent global authoritative order index</li>
+<li><tt>zone_id</tt></li>
+<li><tt>event_type</tt></li>
+<li><tt>subject_ref</tt></li>
+<li><tt>request_id</tt>, if the event is part of a membrane-mediated request chain</li>
+<li><tt>run_id</tt>, if the event is part of a concrete execution attempt</li>
+<li><tt>timestamp_or_order</tt></li>
+<li><tt>causal_ref</tt> or equivalent parent reference, if such ordering is supported</li>
+</ul>
+<t>If a runtime stores events, decisions, and anchors in separate ledgers, those ledgers MUST still preserve one authoritative cross-ledger ordering surface such as a shared monotonic <tt>seq_no</tt>.</t>
+</section>
+
+<section anchor="ledger-manifest"><name>Ledger Manifest</name>
+<t><tt>APSIX-replayable</tt> runtimes SHOULD expose a ledger manifest containing at least:</t>
+
+<ul spacing="compact">
+<li><tt>zone_id</tt></li>
+<li><tt>schema_version</tt></li>
+<li><tt>runtime_profile</tt></li>
+<li><tt>measurement_convention</tt>, if telemetry proxies are exposed</li>
+<li>replay-relevant record paths or references</li>
+<li>record schema version or equivalent compatibility indicator</li>
+</ul>
+</section>
+</section>
+
+<section anchor="primitive-set"><name>Primitive Set</name>
+<t>APSIX-core runtimes MUST implement the lifecycle primitives in Sections 4.1-4.7. Governed and replayable profiles MUST additionally implement the observability primitive in Section 4.8.</t>
+
+<section anchor="zone-domain-spec-zone-id"><name><tt>zone(domain_spec) -&gt; zone_id</tt></name>
+<t>Creates a zone from a domain specification.</t>
+<t>Requirements:</t>
+
+<ul spacing="compact">
+<li>MUST initialize membrane and budget state.</li>
+<li>MUST initialize partition state.</li>
+<li>If the runtime exposes harvested outputs, MUST define an authoritative output boundary or equivalent harvest target surface for the zone.</li>
+<li>SHOULD bind or snapshot the authoritative output boundary for later harvest validation.</li>
+<li>MUST return a stable <tt>zone_id</tt>.</li>
+<li>MUST emit a zone creation event.</li>
+</ul>
+</section>
+
+<section anchor="spawn-capability-set-zone-id-intent-actor-id-error"><name><tt>spawn(capability_set, zone_id, intent) -&gt; actor_id | error</tt></name>
+<t>Requests creation of an actor in a zone.</t>
+<t>Requirements:</t>
+
+<ul spacing="compact">
+<li>Each invocation of <tt>spawn()</tt> MUST admit at most one actor. Multi-actor populations MUST arise through repeated or descendant invocations of <tt>spawn()</tt>, not through batch return of a single call.</li>
+<li>MUST assign admitted partition scope or return an explicit placement failure.</li>
+<li>MUST assign a capability mask and budget share.</li>
+<li>MUST fail deterministically when policy or budget denies creation.</li>
+<li>MUST emit both request and decision events.</li>
+<li>In <tt>APSIX-governed</tt> and <tt>APSIX-replayable</tt>, spawn request and decision surfaces MUST be correlated by a stable <tt>request_id</tt>.</li>
+<li>If actor execution later materializes, the runtime MUST expose a <tt>run_id</tt> or equivalent execution identifier for that concrete attempt.</li>
+<li>A spawned actor operating within an admitted partition MAY decline further expansion, request refinement, or request descendant spawn under an implementation-defined <tt>Spawn Regime</tt>.</li>
+<li>If the runtime supports multiple actors within one partition or descendant spawning from within a partition, spawn decisions MUST remain locality-scoped and auditable at that finer-grained population boundary.</li>
+<li>Descendant spawn, if supported, MUST remain lineage-visible, locality-scoped, budget-visible, and membrane-mediated.</li>
+<li>A runtime MUST NOT place an actor or execution into a live running state unless spawn admission has already succeeded for that actor or execution.</li>
+<li>A runtime MUST NOT treat queued or budget-deferred spawn as equivalent to live running execution.</li>
+<li>In <tt>APSIX-governed</tt> and <tt>APSIX-replayable</tt>, MUST be membrane-mediated.</li>
+</ul>
+</section>
+
+<section anchor="refine-zone-id-scope-ref-hypothesis-partition-set-error"><name><tt>refine(zone_id, scope_ref, hypothesis) -&gt; partition_set | error</tt></name>
+<t>Requests semantic decomposition or restructuring within a zone.</t>
+<t>Requirements:</t>
+
+<ul spacing="compact">
+<li>MUST be recorded as a replayable event.</li>
+<li>MUST preserve lineage from prior scope.</li>
+<li>MUST NOT silently enlarge zone scope without explicit membrane approval.</li>
+<li>SHOULD preserve stable partition identity where possible.</li>
+<li>In <tt>APSIX-governed</tt> and <tt>APSIX-replayable</tt>, policy-sensitive refinement MUST be membrane-mediated.</li>
+</ul>
+</section>
+
+<section anchor="execute-actor-id-target-ref-capability-input-refs-artifact-error"><name><tt>execute(actor_id, target_ref, capability, input_refs) -&gt; artifact | error</tt></name>
+<t>Applies a capability to a zone target or artifact target.</t>
+<t>Requirements:</t>
+
+<ul spacing="compact">
+<li>MUST verify actor authorization for the requested capability.</li>
+<li>MUST verify target locality against admitted partitions or membrane-approved boundary crossing.</li>
+<li>MUST return an artifact or structured failure.</li>
+<li>MUST record provenance links to input references.</li>
+<li>MUST distinguish artifact-producing executions from effectful requests that attempt to mutate or publish across another authority boundary.</li>
+<li>An execution MAY produce artifacts representing further runtime requests such as refinement requests or spawn requests rather than final outputs.</li>
+<li>If the runtime materializes partition-local candidate outputs prior to harvest, it MUST keep those candidate outputs distinct from harvested authoritative outputs.</li>
+<li>If an execution is cancelled, aborted, or force-terminated by runtime policy, the runtime MUST expose a terminal outcome for that execution rather than leaving it in an ambiguous live state.</li>
+<li>Retries, recoveries, and resumed executions SHOULD be represented as distinct runs rather than silently overwriting prior execution outcomes.</li>
+<li>If the runtime supports external or cross-boundary effects, <tt>APSIX-governed</tt> and <tt>APSIX-replayable</tt> profiles MUST subject those effects to membrane mediation and auditable event records before completion.</li>
+</ul>
+</section>
+
+<section anchor="anchor-artifact-ref-zone-id-anchor-id-error"><name><tt>anchor(artifact_ref, zone_id) -&gt; anchor_id | error</tt></name>
+<t>Promotes an artifact into anchored state.</t>
+<t>Requirements:</t>
+
+<ul spacing="compact">
+<li>MUST create or confirm stable artifact identity.</li>
+<li>MUST create an anchor record.</li>
+<li>MUST record decision provenance sufficient for replay.</li>
+<li>MUST NOT silently promote generated artifacts to anchored state without an explicit anchoring transition.</li>
+<li>In <tt>APSIX-governed</tt> and <tt>APSIX-replayable</tt>, MUST be membrane-mediated.</li>
+</ul>
+</section>
+
+<section anchor="harvest-zone-id-filter-artifact-set"><name><tt>harvest(zone_id, filter) -&gt; artifact_set</tt></name>
+<t>Returns anchored artifacts matching a filter or harvest profile.</t>
+<t>Requirements:</t>
+
+<ul spacing="compact">
+<li>MUST NOT implicitly anchor unanchored artifacts.</li>
+<li>SHOULD support deterministic filtering.</li>
+<li>SHOULD preserve or validate the zone's authoritative output boundary; if that boundary has drifted since zone creation, a governed runtime SHOULD deny or escalate harvest rather than silently reinterpreting outputs.</li>
+<li>If the runtime uses partition-local candidate surfaces, harvest MUST perform an explicit transition into the authoritative output boundary rather than treating candidate-local paths as already harvested final outputs.</li>
+<li>MUST emit a harvest event.</li>
+</ul>
+</section>
+
+<section anchor="freeze-zone-id-lifecycle-state-error"><name><tt>freeze(zone_id) -&gt; lifecycle_state | error</tt></name>
+<t>Transitions a zone into a closure regime.</t>
+<t>Requirements:</t>
+
+<ul spacing="compact">
+<li>MUST deny further expansion primitives by default after success.</li>
+<li>MUST emit a freeze or closure event.</li>
+<li>SHOULD clean zone-owned ephemeral runtime resources such as worktrees, temporary branches, sandboxes, or equivalent execution residues.</li>
+<li>MUST NOT be required to re-harvest already harvested outputs in order to stabilize the zone.</li>
+<li>MUST NOT make previously anchored artifacts unreachable for replay or later harvest unless an explicit abandonment, archival, or retention policy is itself recorded as authoritative state.</li>
+<li>SHOULD preserve harvest and replay access.</li>
+</ul>
+</section>
+
+<section anchor="observe-zone-id-event-stream-event-slice"><name><tt>observe(zone_id) -&gt; event_stream | event_slice</tt></name>
+<t>Returns runtime events for the zone.</t>
+<t>Requirements:</t>
+
+<ul spacing="compact">
+<li>MUST expose membrane decisions and artifact lifecycle transitions.</li>
+<li>MUST expose external effect decisions and outcomes, if such effects are supported.</li>
+<li>MUST expose terminal failure, cancellation, or abort outcomes for actor executions when the runtime supports those outcomes.</li>
+<li>MUST preserve authoritative ordering semantics.</li>
+<li>In <tt>APSIX-governed</tt> and <tt>APSIX-replayable</tt>, ordering SHOULD be reconstructible through a stable cross-ledger ordering surface such as <tt>seq_no</tt>, not only through wall-clock timestamps.</li>
+<li>In <tt>APSIX-replayable</tt>, request/decision/run correlation surfaces SHOULD be observable.</li>
+<li>Decision and event surfaces MUST be sound with respect to authoritative zone state: an implementation MUST NOT emit or retain admission, anchor, or lifecycle records that assert a zone state transition that did not occur in authoritative state.</li>
+<li>MAY paginate or stream.</li>
+</ul>
+</section>
+</section>
+
+<section anchor="capability-and-locality-model"><name>Capability and Locality Model</name>
+<t>Capabilities are primitive permissions in APSIX. Roles are derived from them.</t>
+
+<section anchor="core-capability-set"><name>Core Capability Set</name>
+<t>An implementation SHOULD support capability names equivalent to:</t>
+
+<ul spacing="compact">
+<li><tt>refine</tt></li>
+<li><tt>spawn</tt></li>
+<li><tt>execute</tt></li>
+<li><tt>anchor</tt></li>
+<li><tt>harvest</tt></li>
+</ul>
+<t>Equivalent implementation-local names MAY be used if their semantics are documented. Implementations MAY define richer capability vocabularies above this primitive substrate.</t>
+<t><tt>freeze()</tt> is a zone-administrative closure primitive and need not be exposed as a general actor capability.</t>
+</section>
+
+<section anchor="capability-mask"><name>Capability Mask</name>
+<t>Every actor MUST operate under a capability mask. The runtime MUST reject attempts to execute a primitive that exceeds the actor's mask.</t>
+</section>
+
+<section anchor="locality-binding"><name>Locality Binding</name>
+<t>Capability grants MUST be interpreted relative to locality. Authorization is incomplete unless the runtime can answer both:</t>
+
+<ul spacing="compact">
+<li>which operation class is permitted;</li>
+<li>over which admitted partition set it is permitted.</li>
+</ul>
+</section>
+
+<section anchor="role-derivation"><name>Role Derivation</name>
+<t>Roles are not normative objects in APSIX. A runtime MAY expose roles for ergonomics, but the normative substrate MUST remain the capability mask plus locality binding.</t>
+</section>
+</section>
+
+<section anchor="membrane-semantics"><name>Membrane Semantics</name>
+<t>The membrane is the critical enforcement locus of APSIX.</t>
+
+<section anchor="complete-mediation"><name>Complete Mediation</name>
+<t>The runtime MUST subject the following operations to membrane mediation:</t>
+
+<ul spacing="compact">
+<li>actor creation</li>
+<li>policy-sensitive refinement</li>
+<li>cross-partition effects</li>
+<li>cross-zone effects</li>
+<li>external effects against other authority boundaries</li>
+<li>artifact promotion</li>
+<li>budget-sensitive expansion</li>
+</ul>
+<t>If an implementation allows any of these operations to bypass membrane checks, it is not compliant with governed profiles.</t>
+</section>
+
+<section anchor="decision-surface"><name>Decision Surface</name>
+<t>Membrane decisions MUST expose at least three outcomes:</t>
+
+<ul spacing="compact">
+<li><tt>allow</tt></li>
+<li><tt>deny</tt></li>
+<li><tt>escalate</tt></li>
+</ul>
+<t><tt>escalate</tt> indicates that local runtime authority is insufficient and an external approval or higher-level policy decision is required.</t>
+</section>
+
+<section anchor="decision-record"><name>Decision Record</name>
+<t>Each membrane-mediated decision MUST make available:</t>
+
+<ul spacing="compact">
+<li><tt>decision</tt></li>
+<li><tt>request_id</tt></li>
+<li><tt>policy_version</tt></li>
+<li><tt>reason_code</tt></li>
+<li><tt>budget_context</tt></li>
+<li><tt>capability_basis</tt></li>
+</ul>
+<t>An implementation SHOULD expose this through a stable <tt>membrane_decision_record</tt> schema rather than through framework-local logging formats.</t>
+</section>
+
+<section anchor="budget-interaction"><name>Budget Interaction</name>
+<t>Budget exhaustion MUST be visible to membrane decisions. An exhausted zone MUST NOT continue infinite spawn or refinement as if the runtime had no control surface. If an implementation supports effect quotas or publication limits, exhaustion of those limits MUST likewise be visible to membrane decisions.</t>
+<t>If an implementation supports multiple actors within one partition, budget and admission state SHOULD remain interpretable at that partition-local expansion boundary rather than only at whole-zone granularity.</t>
+<t>Deferral due to budget or capacity pressure MUST remain distinguishable from execution failure. A runtime MUST NOT collapse <tt>budget_exhausted</tt>, queued, or deferred conditions into terminal actor failure unless an execution actually ran and failed.</t>
+</section>
+</section>
+
+<section anchor="artifact-provenance-and-replay-semantics"><name>Artifact, Provenance, and Replay Semantics</name>
+<t>APSIX is not only about actor lifecycle. It is also about stable artifact handling and authoritative replay.</t>
+
+<section anchor="artifact-lifecycle"><name>Artifact Lifecycle</name>
+<t>An implementation MUST support a lifecycle in which artifacts are at minimum:</t>
+
+<ol spacing="compact">
+<li>generated</li>
+<li>optionally anchored</li>
+<li>optionally harvested</li>
+</ol>
+<t>If an implementation distinguishes between partition-local candidate outputs and authoritative final outputs, that distinction SHOULD remain explicit in artifact type, lifecycle state, or equivalent durable metadata.</t>
+</section>
+
+<section anchor="provenance"><name>Provenance</name>
+<t>Anchored artifacts MUST preserve enough provenance to answer:</t>
+
+<ul spacing="compact">
+<li>which actor produced this artifact;</li>
+<li>in which zone;</li>
+<li>over which partition scope;</li>
+<li>under which capability;</li>
+<li>from which input references;</li>
+<li>under which membrane decision context.</li>
+</ul>
+<t>At minimum, an anchored artifact SHOULD be portable together with:</t>
+
+<ul spacing="compact">
+<li>its <tt>anchor_record</tt>;</li>
+<li>the originating <tt>membrane_decision_record</tt>;</li>
+<li>referenced input artifacts or scope identifiers.</li>
+</ul>
+<t>If an anchored artifact is the basis for an external effect, the runtime SHOULD preserve a portable reference to the effect decision and effect outcome record as well.</t>
+</section>
+
+<section anchor="replay-contract"><name>Replay Contract</name>
+<t>An implementation MUST support authoritative reconstruction of zone state from:</t>
+
+<ul spacing="compact">
+<li>ordered events;</li>
+<li>membrane decision records;</li>
+<li>anchored artifacts;</li>
+<li>run records, if runs are exposed separately from actors;</li>
+<li>policy version history;</li>
+<li>budget and lifecycle checkpoints, if such checkpoints are used.</li>
+</ul>
+<t>Replay MUST reconstruct authoritative runtime state. It MUST NOT be interpreted as a requirement to reproduce original latent reasoning traces.</t>
+<t>For portability, replay-relevant records MUST be serializable through stable schemas rather than through implementation-specific debug logs alone.</t>
+<t>If replay-relevant data is split across multiple ledgers, replay MUST reconstruct a single authoritative order across them.</t>
+<t>When actor executions are cancelled, aborted, or otherwise force-terminated, replay MUST reconstruct those executions as terminal outcomes rather than as still-live runtime activity.</t>
+<t>When execution is interrupted by runtime restart, process disappearance, or other loss of live actor state, a governed or replayable runtime SHOULD normalize the affected execution into a terminal, recovered, or requeued state rather than leaving authoritative state ambiguous.</t>
+<t>If an implementation supports within-partition actor populations, replay SHOULD also reconstruct the effective spawn regime and lineage context sufficiently to distinguish bounded exploration from uncontrolled epidemic expansion.</t>
+<t>If an implementation exposes operator-facing projections or planning views in addition to authoritative zone state, replay MUST treat those views as derived artifacts rather than as independent authoritative inputs.</t>
+</section>
+
+<section anchor="no-silent-promotion"><name>No Silent Promotion</name>
+<t>An implementation MUST NOT treat generated output as anchored by default unless generation and anchoring are explicitly collapsed into one documented primitive.</t>
+</section>
+
+<section anchor="measurement-convention"><name>Measurement Convention</name>
+<t>If an implementation exposes runtime telemetry, proxy metrics, or derived analytical surfaces in addition to the core APSIX objects, it SHOULD expose a stable measurement convention describing:</t>
+
+<ul spacing="compact">
+<li>which records or state surfaces are treated as measurement inputs;</li>
+<li>whether metrics are direct runtime variables or deployment-specific proxies;</li>
+<li>what aggregation horizon or windowing assumptions apply;</li>
+<li>what runtime profile or workload regime the measurements are valid for.</li>
+</ul>
+<t>Implementations MAY expose population metrics describing actor population size, spawn rate, partition-local population distribution, or other indicators useful for detecting uncontrolled expansion regimes.</t>
+<t>If such metrics are used to support replayable analysis, comparison across zones, or theory-mapping claims, <tt>APSIX-replayable</tt> implementations SHOULD make that measurement convention visible through a stable manifest, report schema, or equivalent replay-relevant surface.</t>
+</section>
+</section>
+
+<section anchor="error-model"><name>Error Model</name>
+<t>Primitive failures SHOULD be structured rather than opaque.</t>
+<t>Recommended error classes:</t>
+
+<ul spacing="compact">
+<li><tt>policy_denied</tt></li>
+<li><tt>budget_exhausted</tt></li>
+<li><tt>unknown_zone</tt></li>
+<li><tt>unknown_actor</tt></li>
+<li><tt>unknown_artifact</tt></li>
+<li><tt>unknown_partition</tt></li>
+<li><tt>capability_denied</tt></li>
+<li><tt>invalid_transition</tt></li>
+<li><tt>effect_denied</tt></li>
+<li><tt>requires_escalation</tt></li>
+<li><tt>replay_unavailable</tt></li>
+<li><tt>aborted</tt></li>
+<li><tt>cancelled</tt></li>
+</ul>
+<t>When <tt>observe(zone_id)</tt> is implemented, the runtime SHOULD make these errors observable through it. <tt>APSIX-governed</tt> and <tt>APSIX-replayable</tt> profiles MUST do so.</t>
+</section>
+
+<section anchor="compliance-profiles"><name>Compliance Profiles</name>
+<t>This document defines three progressive profiles.</t>
+
+<section anchor="apsix-core"><name><tt>APSIX-core</tt></name>
+<t>Requires:</t>
+
+<ul spacing="compact">
+<li><tt>zone</tt></li>
+<li><tt>refine</tt></li>
+<li><tt>spawn</tt></li>
+<li><tt>execute</tt></li>
+<li><tt>anchor</tt></li>
+<li><tt>harvest</tt></li>
+<li><tt>freeze</tt></li>
+</ul>
+<t>This profile is the minimal portable primitive surface.</t>
+</section>
+
+<section anchor="apsix-governed"><name><tt>APSIX-governed</tt></name>
+<t>Requires all <tt>APSIX-core</tt> primitives plus:</t>
+
+<ul spacing="compact">
+<li><tt>observe</tt></li>
+<li>membrane-mediated spawn</li>
+<li>membrane-mediated refine for policy-sensitive scope changes</li>
+<li>membrane-mediated external or cross-boundary effects, if the runtime supports them</li>
+<li>membrane-mediated anchor</li>
+<li>explicit budget handling</li>
+<li>decision records with reason codes</li>
+<li>stable membrane decision records</li>
+<li>stable request correlation across membrane-mediated lifecycle transitions</li>
+</ul>
+<t>This profile is the minimum useful profile for real spawn governance.</t>
+</section>
+
+<section anchor="apsix-replayable"><name><tt>APSIX-replayable</tt></name>
+<t>Requires all <tt>APSIX-governed</tt> features plus:</t>
+
+<ul spacing="compact">
+<li>partition-visible locality semantics</li>
+<li>artifact provenance</li>
+<li>explicit run records or equivalent execution-attempt visibility</li>
+<li>stable anchor records</li>
+<li>ordered event exposure</li>
+<li>stable event records</li>
+<li>stable cross-ledger ordering semantics</li>
+<li>ledger manifest or equivalent replay surface description</li>
+<li>policy version visibility</li>
+<li>authoritative replay support</li>
+<li>measurement convention visibility, if runtime telemetry proxies are exposed</li>
+</ul>
+<t>This profile is the recommended basis for research and auditable production systems.</t>
+</section>
+
+<section anchor="conformance-guidance"><name>Conformance Guidance</name>
+<t>Primitive presence alone is insufficient to establish meaningful APSIX conformance.</t>
+<t>Recommended conformance evaluation SHOULD additionally check:</t>
+
+<ul spacing="compact">
+<li>lifecycle ordering invariants across <tt>zone</tt>, <tt>spawn</tt>, <tt>execute</tt>, <tt>anchor</tt>, <tt>harvest</tt>, and <tt>freeze</tt>;</li>
+<li>request/decision/run correlation integrity where those surfaces are exposed;</li>
+<li>preservation of authoritative cross-ledger ordering semantics;</li>
+<li>absence of silent promotion from generated to anchored state;</li>
+<li>explicit separation between candidate-local artifact surfaces and harvested authoritative output surfaces, when both exist;</li>
+<li>distinction between deferred/queued conditions and terminal execution failure;</li>
+<li>normalization of interrupted executions into terminal, recovered, or requeued authoritative states;</li>
+<li>preservation of locality-scoped spawn control when multiple actors per partition are supported;</li>
+<li>consistency between authoritative zone state and exposed event or decision ledgers.</li>
+</ul>
+<t>Implementations MAY satisfy these checks through scenario traces, replay fixtures, or other stable lifecycle test surfaces rather than only through isolated primitive-level tests.</t>
+</section>
+</section>
+
+<section anchor="mapping-to-concrete-runtimes"><name>Mapping to Concrete Runtimes</name>
+<t>APSIX does not mandate a specific implementation style.</t>
+<t>Examples:</t>
+
+<ul spacing="compact">
+<li>a content-spawn runtime could treat each source idea as one zone and each channel draft as a harvestable artifact family;</li>
+<li>a software runtime could treat bounded codebase areas as zones and patches or test reports as artifacts;</li>
+<li>a research runtime could treat a literature field as a zone and claim-evidence memos as anchored artifacts.</li>
+</ul>
+<t>What matters is not the domain itself, but whether the runtime exposes the primitives, locality semantics, membrane decisions, and replay obligations coherently.</t>
+</section>
+
+<section anchor="non-goals"><name>Non-Goals</name>
+<t>APSIX does not attempt to standardize:</t>
+
+<ul spacing="compact">
+<li>chain-of-thought formats;</li>
+<li>inter-model competition protocols;</li>
+<li>persona taxonomies;</li>
+<li>benchmark task schemas;</li>
+<li>human-interface conventions;</li>
+<li>internal scheduler algorithms;</li>
+<li>concrete effect transports or publication APIs;</li>
+<li>storage and graph-engine implementations.</li>
+</ul>
+<t>Those may exist above or below the APSIX layer, but they are not part of the core contract.</t>
+</section>
+
+<section anchor="open-issues"><name>Open Issues</name>
+<t>Several questions remain open for later versions:</t>
+
+<ul spacing="compact">
+<li>whether cross-zone <tt>merge()</tt> belongs in an extension set;</li>
+<li>whether an explicit <tt>effect()</tt> primitive should remain derived from <tt>execute()</tt> plus membrane policy or become standardized;</li>
+<li>what minimum provenance fields are sufficient for strong auditability;</li>
+<li>whether event, anchor, and membrane decision schemas should be versioned independently or under one runtime schema version;</li>
+<li>how replay semantics should interact with distributed asynchronous runtimes;</li>
+<li>whether an explicit <tt>checkpoint()</tt> primitive should remain derived or become standardized;</li>
+<li>whether <tt>Run</tt> should remain a logical object or become a first-class primitive argument surface;</li>
+<li>whether output-boundary drift detection should become mandatory in governed profiles or remain a replayable-profile recommendation.</li>
+</ul>
+</section>
+
+<section anchor="security-considerations"><name>Security Considerations</name>
+<t>APSIX defines a governance surface for spawn-capable semantic runtimes. As a result, security and governance failures in an APSIX implementation are not limited to data exposure; they can also alter population growth, artifact promotion, and cross-boundary effects.</t>
+<t>Improper membrane policy configuration, incomplete mediation, or weak audit surfaces may lead to:</t>
+
+<ul spacing="compact">
+<li>uncontrolled actor population expansion;</li>
+<li>artifact promotion of unverified or policy-incompatible outputs;</li>
+<li>cross-boundary effect escalation without sufficient auditability;</li>
+<li>replay gaps that prevent authoritative reconstruction of sensitive decisions;</li>
+<li>policy drift between authoritative zone state and exposed event or decision records.</li>
+</ul>
+<t>Implementations SHOULD ensure that membrane policies enforce:</t>
+
+<ul spacing="compact">
+<li>strict admission control for actor creation and policy-sensitive refinement;</li>
+<li>explicit artifact validation prior to anchoring;</li>
+<li>auditable decision records for cross-boundary effects;</li>
+<li>protection of authoritative ordering and replay-relevant ledgers against silent tampering or divergence;</li>
+<li>clear separation between generated, anchored, and harvested artifact states.</li>
+</ul>
+<t>Implementations supporting external effects SHOULD additionally ensure that:</t>
+
+<ul spacing="compact">
+<li>escalation paths are authenticated and authorization boundaries are explicit;</li>
+<li>effect completion is recorded as a durable auditable outcome;</li>
+<li>cancelled, aborted, or partially completed effects are not presented as successful state transitions.</li>
+</ul>
+<t>Failure to enforce these constraints may result in loss of governance over semantic expansion within a zone and may permit unauthorized external actions to appear compliant in operator-facing views.</t>
+</section>
+
+<section anchor="iana-considerations"><name>IANA Considerations</name>
+<t>This document has no IANA actions.</t>
+</section>
+
+<section anchor="references"><name>References</name>
+
+<section anchor="normative-references"><name>Normative References</name>
+<t>[RFC2119]  Bradner, S., &quot;Key words for use in RFCs to Indicate
+           Requirement Levels&quot;, BCP 14, RFC 2119,
+           DOI 10.17487/RFC2119, March 1997.</t>
+<t>[RFC8174]  Leiba, B., &quot;Ambiguity of Uppercase vs Lowercase in
+           RFC 2119 Key Words&quot;, BCP 14, RFC 8174,
+           DOI 10.17487/RFC8174, May 2017.</t>
+</section>
+</section>
+
+<section anchor="conclusion"><name>Conclusion</name>
+<t>APSIX is a proposal for a minimal primitive contract for portable semantic runtimes. Its central claim is that the portable layer should standardize zone, membrane, run, artifact, locality, and replay operations rather than framework-local agent behaviors.</t>
+<t>If this direction is useful, higher-level runtimes and applications can target a stable substrate of zones, spawn, refinement, execution runs, anchoring, harvest, membrane decisions, and replayable authoritative state. That would move the field one step away from ad hoc orchestration and one step closer to real runtime portability.</t>
+</section>
+
+</middle>
+
+</rfc>

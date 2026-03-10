@@ -1,0 +1,2862 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>APSIX: Minimal Primitive Contract for Portable Semantic Runtimes</title>
+<meta content="Oleg Romanchuk" name="author">
+<meta content="
+       This document proposes  APSIX  ( Agent Portable Semantic Interface eXtension ) as a minimal primitive contract for portable semantic runtimes. The goal is not to standardize agent personalities, prompt formats, planner graphs, or model-specific reasoning behavior. The goal is to standardize the smallest useful contract of the runtime environment itself. 
+       The design reflects runtime patterns observed in early governed semantic-runtime implementations. In those implementations, the primary managed resource is bounded semantic territory, and spawned actor populations are the main source of pressure on that resource. APSIX defines the lower-layer contract required for such runtimes to become portable across implementations. 
+       The contract is intentionally narrow. It standardizes logical objects, lifecycle primitives, membrane-mediated decisions, capability semantics, event and provenance requirements, replay obligations, and progressive compliance profiles. It does not standardize model internals, scheduling strategies, storage engines, user interfaces, or application-specific orchestration logic. 
+       The document is written to stand on its own as a self-contained runtime specification, without dependency on unpublished external framing. 
+       This is a draft specification, not a final standard. The current name is provisional; the technical target is a portable primitive surface for governed semantic runtimes. 
+       This document is intended as a  research specification , not as an immediate industry standardization proposal. Its purpose is to define a portability target early enough that emerging runtime implementations do not harden around mutually incompatible framework-local abstractions before a shared primitive vocabulary exists. 
+    " name="description">
+<meta content="xml2rfc 3.31.0" name="generator">
+<meta content="draft-romanchuk-apsix-00" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.31.0
+    Python 3.14.2
+    ConfigArgParse 1.7.1
+    google-i18n-address 3.1.1
+    intervaltree 3.1.0
+    Jinja2 3.1.6
+    lxml 6.0.2
+    platformdirs 4.5.1
+    pycountry 24.6.1
+    PyYAML 6.0.3
+    requests 2.32.5
+    wcwidth 0.2.14
+-->
+<link href="draft-romanchuk-apsix-00.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">/*
+
+  NOTE: Changes at the bottom of this file overrides some earlier settings.
+
+  Once the style has stabilized and has been adopted as an official RFC style,
+  this can be consolidated so that style settings occur only in one place, but
+  for now the contents of this file consists first of the initial CSS work as
+  provided to the RFC Formatter (xml2rfc) work, followed by itemized and
+  commented changes found necessary during the development of the v3
+  formatters.
+
+*/
+
+/* fonts */
+@import url('https://static.ietf.org/fonts/noto-sans/import.css'); /* Sans-serif */
+@import url('https://static.ietf.org/fonts/noto-serif/import.css'); /* Serif (print) */
+@import url('https://static.ietf.org/fonts/roboto-mono/import.css'); /* Monospace */
+
+:root {
+  --font-sans: 'Noto Sans', Arial, Helvetica, sans-serif;
+  --font-serif: 'Noto Serif', 'Times', 'Times New Roman', serif;
+  --font-mono: 'Roboto Mono', Courier, 'Courier New', monospace;
+}
+
+@viewport {
+  zoom: 1.0;
+}
+@-ms-viewport {
+  width: extend-to-zoom;
+  zoom: 1.0;
+}
+/* general and mobile first */
+html {
+}
+body {
+  max-width: 90%;
+  margin: 1.5em auto;
+  color: #222;
+  background-color: #fff;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  overflow-wrap: break-word;
+}
+.ears {
+  display: none;
+}
+
+/* headings */
+#title, h1, h2, h3, h4, h5, h6 {
+  margin: 1em 0 0.5em;
+  font-weight: bold;
+  line-height: 1.3;
+}
+#title {
+  clear: both;
+  border-bottom: 1px solid #ddd;
+  margin: 0 0 0.5em 0;
+  padding: 1em 0 0.5em;
+}
+.author {
+  padding-bottom: 4px;
+}
+h1 {
+  font-size: 26px;
+  margin: 1em 0;
+}
+h2 {
+  font-size: 22px;
+  margin-top: -20px;  /* provide offset for in-page anchors */
+  padding-top: 33px;
+}
+h3 {
+  font-size: 18px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h4 {
+  font-size: 16px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h5, h6 {
+  font-size: 14px;
+}
+#n-copyright-notice {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 1em;
+  margin-bottom: 1em;
+}
+/* general structure */
+p {
+  padding: 0;
+  margin: 0 0 1em 0;
+  text-align: left;
+}
+div, span {
+  position: relative;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+@media print {
+  svg {
+    max-height: 850px;
+    max-width: 660px;
+  }
+}
+svg[font-family~="serif" i], svg [font-family~="serif" i] {
+  font-family: var(--font-serif);
+}
+svg[font-family~="sans-serif" i], svg [font-family~="sans-serif" i] {
+  font-family: var(--font-sans);
+}
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  display: table;
+  border: none;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 1em 2em;
+}
+ol ol, ul ul, ol ul, ul ol {
+  margin-left: 1em;
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+.ulCompact li {
+  margin: 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+}
+ul.empty li, .ulEmpty li {
+  margin-top: 0.5em;
+}
+ul.ulBare, li.ulBare {
+  margin-left: 0em !important;
+}
+ul.compact, .ulCompact,
+ol.compact, .olCompact {
+  line-height: 100%;
+  margin: 0 0 0 2em;
+}
+
+/* definition lists */
+dl {
+}
+dl > dt {
+  float: left;
+  margin-right: 1em;
+}
+/* 
+dl.nohang > dt {
+  float: none;
+}
+*/
+dl > dd {
+  margin-bottom: .8em;
+  min-height: 1.3em;
+}
+dl.compact > dd, .dlCompact > dd {
+  margin-bottom: 0em;
+}
+dl > dd > dl {
+  margin-top: 0.5em;
+  margin-bottom: 0em;
+}
+
+/* links */
+a {
+  text-decoration: none;
+}
+a[href] {
+  color: #22e; /* Arlen: WCAG 2019 */
+}
+a[href]:hover {
+  background-color: #f2f2f2;
+}
+figcaption a[href],
+a[href].selfRef {
+  color: #222;
+}
+/* XXX probably not this:
+a.selfRef:hover {
+  background-color: transparent;
+  cursor: default;
+} */
+
+/* Figures */
+tt, code, pre {
+  background-color: #f9f9f9;
+  font-family: var(--font-mono);
+}
+pre {
+  border: 1px solid #eee;
+  margin: 0;
+  padding: 1em;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption {
+  font-style: italic;
+  margin: 0 0 1em 0;
+}
+@media screen {
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+    max-width: calc(100% - 22px);
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 1.2em 2em;
+}
+blockquote {
+  background-color: #f9f9f9;
+  color: #111; /* Arlen: WCAG 2019 */
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  margin: 1em 0;
+}
+blockquote > *:last-child {
+  margin-bottom: 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+.xref {
+  overflow-wrap: normal;
+}
+
+/* tables */
+table {
+  width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  border: 1px solid #eee;
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5em 0.75em;
+}
+th {
+  text-align: left;
+  background-color: #e9e9e9;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f5f5f5;
+}
+table caption {
+  font-style: italic;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+table p {
+  /* XXX to avoid bottom margin on table row signifiers. If paragraphs should
+     be allowed within tables more generally, it would be far better to select on a class. */
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  color: #666; /* Arlen: AHDJ 2019 */
+  text-decoration: none;
+  visibility: hidden;
+  user-select: none;
+  -ms-user-select: none;
+  -o-user-select:none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+@media screen {
+  aside:hover > a.pilcrow,
+  p:hover > a.pilcrow,
+  blockquote:hover > a.pilcrow,
+  div:hover > a.pilcrow,
+  li:hover > a.pilcrow,
+  pre:hover > a.pilcrow {
+    visibility: visible;
+  }
+  a.pilcrow:hover {
+    background-color: transparent;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid #eee;
+}
+.bcp14 {
+  font-variant: small-caps;
+}
+
+.role {
+  font-variant: all-small-caps;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: 0.9em;
+}
+#identifiers dt {
+  width: 3em;
+  clear: left;
+}
+#identifiers dd {
+  float: left;
+  margin-bottom: 0;
+}
+/* Fix PDF info block run off issue */
+@media print {
+  #identifiers dd {
+    max-width: 100%;
+  }
+}
+#identifiers .authors .author {
+  display: inline-block;
+  margin-right: 1.5em;
+}
+#identifiers .authors .org {
+  font-style: italic;
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #666; /* Arlen: WCAG 2019 */
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: left;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc  {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+}
+nav.toc ul {
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  list-style: none;
+}
+nav.toc li {
+  line-height: 1.3em;
+  margin: 0.75em 0;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+}
+/* references */
+.references dt {
+  text-align: right;
+  font-weight: bold;
+  min-width: 7em;
+}
+.references dd {
+  margin-left: 8em;
+  overflow: auto;
+}
+
+.refInstance {
+  margin-bottom: 1.25em;
+}
+
+.refSubseries {
+  margin-bottom: 1.25em;
+}
+
+.references .ascii {
+  margin-bottom: 0.25em;
+}
+
+/* index */
+.index ul {
+  margin: 0 0 0 1em;
+  padding: 0;
+  list-style: none;
+}
+.index ul ul {
+  margin: 0;
+}
+.index li {
+  margin: 0;
+  text-indent: -2em;
+  padding-left: 2em;
+  padding-bottom: 5px;
+}
+.indexIndex {
+  margin: 0.5em 0 1em;
+}
+.index a {
+  font-weight: 700;
+}
+/* make the index two-column on all but the smallest screens */
+@media (min-width: 600px) {
+  .index ul {
+    -moz-column-count: 2;
+    -moz-column-gap: 20px;
+  }
+  .index ul ul {
+    -moz-column-count: 1;
+    -moz-column-gap: 0;
+  }
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  margin: 1em 0;
+}
+
+address.vcard .nameRole {
+  font-weight: 700;
+  margin-left: 0;
+}
+address.vcard .label {
+  font-family: var(--font-sans);
+  margin: 0.5em 0;
+}
+address.vcard .type {
+  display: none;
+}
+.alternative-contact {
+  margin: 1.5em 0 1em;
+}
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+
+/* temporary notes */
+.rfcEditorRemove::before {
+  position: absolute;
+  top: 0.2em;
+  right: 0.2em;
+  padding: 0.2em;
+  content: "The RFC Editor will remove this note";
+  color: #9e2a00; /* Arlen: WCAG 2019 */
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+}
+.rfcEditorRemove {
+  position: relative;
+  padding-top: 1.8em;
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  border-radius: 3px;
+}
+.cref {
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+/* alternative layout for smaller screens */
+@media screen and (max-width: 1023px) {
+  body {
+    padding-top: 2em;
+  }
+  #title {
+    padding: 1em 0;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-top: -18px;  /* provide offset for in-page anchors */
+    padding-top: 38px;
+  }
+  #identifiers dd {
+    max-width: 60%;
+  }
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 0;
+    margin: 0;
+    background-color: inherit;
+    border-bottom: 1px solid #ccc;
+  }
+  #toc h2 {
+    margin: -1px 0 0 0;
+    padding: 4px 0 4px 6px;
+    padding-right: 1em;
+    min-width: 190px;
+    font-size: 1.1em;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+  }
+  #toc h2::before { /* css hamburger */
+    float: right;
+    position: relative;
+    width: 1em;
+    height: 1px;
+    left: -164px;
+    margin: 6px 0 0 0;
+    background: white none repeat scroll 0 0;
+    box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+    content: "";
+  }
+  #toc nav {
+    display: none;
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+}
+
+/* alternative layout for wide screens */
+@media screen and (min-width: 1024px) {
+  body {
+    max-width: 724px;
+    margin: 42px auto;
+    padding-left: 1.5em;
+    padding-right: 29em;
+  }
+  #toc {
+    position: fixed;
+    top: 42px;
+    right: 42px;
+    width: 25%;
+    margin: 0;
+    padding: 0 1em;
+    z-index: 1;
+  }
+  #toc h2 {
+    border-top: none;
+    border-bottom: 1px solid #ddd;
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 0;
+    overflow: auto;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre {
+    page-break-inside: avoid;
+  }
+  figure {
+    overflow: scroll;
+  }
+  .breakable pre {
+    break-inside: auto;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  h2+*, h3+*, h4+*, h5+*, h6+* {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+/* This is commented out here, as the string-set: doesn't
+   pass W3C validation currently */
+/*
+.ears thead .left {
+  string-set: ears-top-left content();
+}
+
+.ears thead .center {
+  string-set: ears-top-center content();
+}
+
+.ears thead .right {
+  string-set: ears-top-right content();
+}
+
+.ears tfoot .left {
+  string-set: ears-bottom-left content();
+}
+
+.ears tfoot .center {
+  string-set: ears-bottom-center content();
+}
+
+.ears tfoot .right {
+  string-set: ears-bottom-right content();
+}
+*/
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+  /* The following is commented out here, but set appropriately by in code, as
+     the content depends on the document */
+  /*
+  @top-left {
+    content: 'Internet-Draft';
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-left {
+    content: string(ears-top-left);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-center {
+    content: string(ears-top-center);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-right {
+    content: string(ears-top-right);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @bottom-left {
+    content: string(ears-bottom-left);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-center {
+    content: string(ears-bottom-center);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-right {
+      content: '[Page ' counter(page) ']';
+      vertical-align: top;
+      border-top: solid 1px #ccc;
+  }
+  */
+
+}
+
+/* Changes introduced to fix issues found during implementation */
+/* Make sure links are clickable even if overlapped by following H* */
+a {
+  z-index: 2;
+}
+/* Separate body from document info even without intervening H1 */
+section {
+  clear: both;
+}
+
+
+/* Top align author divs, to avoid names without organization dropping level with org names */
+.author {
+  vertical-align: top;
+}
+
+/* Leave room in document info to show Internet-Draft on one line */
+#identifiers dt {
+  width: 8em;
+}
+
+/* Don't waste quite as much whitespace between label and value in doc info */
+#identifiers dd {
+  margin-left: 1em;
+}
+
+/* Give floating toc a background color (needed when it's a div inside section */
+#toc {
+  background-color: white;
+}
+
+/* Make the collapsed ToC header render white on gray also when it's a link */
+@media screen and (max-width: 1023px) {
+  #toc h2 a,
+  #toc h2 a:link,
+  #toc h2 a:focus,
+  #toc h2 a:hover,
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+}
+
+/* Give the bottom of the ToC some whitespace */
+@media screen and (min-width: 1024px) {
+  #toc {
+    padding: 0 0 1em 1em;
+  }
+}
+
+/* Style section numbers with more space between number and title */
+.section-number {
+  padding-right: 0.5em;
+}
+
+/* prevent monospace from becoming overly large */
+tt, code, pre {
+  font-size: 95%;
+}
+
+/* Fix the height/width aspect for ascii art*/
+.sourcecode pre,
+.art-text pre {
+  line-height: 1.12;
+}
+
+
+/* Add styling for a link in the ToC that points to the top of the document */
+a.toplink {
+  float: right;
+  margin-right: 0.5em;
+}
+
+/* Fix the dl styling to match the RFC 7992 attributes */
+dl > dt,
+dl.dlParallel > dt {
+  float: left;
+  margin-right: 1em;
+}
+dl.dlNewline > dt {
+  float: none;
+}
+
+/* Provide styling for table cell text alignment */
+table td.text-left,
+table th.text-left {
+  text-align: left;
+}
+table td.text-center,
+table th.text-center {
+  text-align: center;
+}
+table td.text-right,
+table th.text-right {
+  text-align: right;
+}
+
+/* Make the alternative author contact information look less like just another
+   author, and group it closer with the primary author contact information */
+.alternative-contact {
+  margin: 0.5em 0 0.25em 0;
+}
+address .non-ascii {
+  margin: 0 0 0 2em;
+}
+
+/* With it being possible to set tables with alignment
+  left, center, and right, { width: 100%; } does not make sense */
+table {
+  width: auto;
+}
+
+/* Avoid reference text that sits in a block with very wide left margin,
+   because of a long floating dt label.*/
+.references dd {
+  overflow: visible;
+}
+
+/* Control caption placement */
+caption {
+  caption-side: bottom;
+}
+
+/* Limit the width of the author address vcard, so names in right-to-left
+   script don't end up on the other side of the page. */
+
+address.vcard {
+  max-width: 30em;
+  margin-right: auto;
+}
+
+/* For address alignment dependent on LTR or RTL scripts */
+address div.left {
+  text-align: left;
+}
+address div.right {
+  text-align: right;
+}
+
+/* Provide table alignment support.  We can't use the alignX classes above
+   since they do unwanted things with caption and other styling. */
+table.right {
+ margin-left: auto;
+ margin-right: 0;
+}
+table.center {
+ margin-left: auto;
+ margin-right: auto;
+}
+table.left {
+ margin-left: 0;
+ margin-right: auto;
+}
+
+/* Give the table caption label the same styling as the figcaption */
+caption a[href] {
+  color: #222;
+}
+
+@media print {
+  .toplink {
+    display: none;
+  }
+
+  /* avoid overwriting the top border line with the ToC header */
+  #toc {
+    padding-top: 1px;
+  }
+
+  /* Avoid page breaks inside dl and author address entries */
+  .vcard {
+    page-break-inside: avoid;
+  }
+
+}
+/* Tweak the bcp14 keyword presentation */
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+/* Tweak the invisible space above H* in order not to overlay links in text above */
+ h2 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 31px;
+ }
+ h3 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+ h4 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+/* Float artwork pilcrow to the right */
+@media screen {
+  .artwork a.pilcrow {
+    display: block;
+    line-height: 0.7;
+    margin-top: 0.15em;
+  }
+}
+/* Make pilcrows on dd visible */
+@media screen {
+  dd:hover > a.pilcrow {
+    visibility: visible;
+  }
+}
+/* Make the placement of figcaption match that of a table's caption
+   by removing the figure's added bottom margin */
+.alignLeft.art-text,
+.alignCenter.art-text,
+.alignRight.art-text {
+   margin-bottom: 0;
+}
+.alignLeft,
+.alignCenter,
+.alignRight {
+  margin: 1em 0 0 0;
+}
+/* In print, the pilcrow won't show on hover, so prevent it from taking up space,
+   possibly even requiring a new line */
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+/* Styling for the external metadata */
+div#external-metadata {
+  background-color: #eee;
+  padding: 0.5em;
+  margin-bottom: 0.5em;
+  display: none;
+}
+div#internal-metadata {
+  padding: 0.5em;                       /* to match the external-metadata padding */
+}
+/* Styling for title RFC Number */
+h1#rfcnum {
+  clear: both;
+  margin: 0 0 -1em;
+  padding: 1em 0 0 0;
+}
+/* Make .olPercent look the same as <ol><li> */
+dl.olPercent > dd {
+  margin-bottom: 0.25em;
+  min-height: initial;
+}
+/* Give aside some styling to set it apart */
+aside {
+  border-left: 1px solid #ddd;
+  margin: 1em 0 1em 2em;
+  padding: 0.2em 2em;
+}
+aside > dl,
+aside > ol,
+aside > ul,
+aside > table,
+aside > p {
+  margin-bottom: 0.5em;
+}
+/* Additional page break settings */
+@media print {
+  figcaption, table caption {
+    page-break-before: avoid;
+  }
+}
+/* Font size adjustments for print */
+@media print {
+  body  { font-size: 10pt;      line-height: normal; max-width: 96%; }
+  h1    { font-size: 1.72em;    padding-top: 1.5em; } /* 1*1.2*1.2*1.2 */
+  h2    { font-size: 1.44em;    padding-top: 1.5em; } /* 1*1.2*1.2 */
+  h3    { font-size: 1.2em;     padding-top: 1.5em; } /* 1*1.2 */
+  h4    { font-size: 1em;       padding-top: 1.5em; }
+  h5, h6 { font-size: 1em;      margin: initial; padding: 0.5em 0 0.3em; }
+}
+/* Sourcecode margin in print, when there's no pilcrow */
+@media print {
+  .artwork,
+  .artwork > pre,
+  .sourcecode {
+    margin-bottom: 1em;
+  }
+}
+/* Avoid narrow tables forcing too narrow table captions, which may render badly */
+table {
+  min-width: 20em;
+}
+/* ol type a */
+ol.type-a { list-style-type: lower-alpha; }
+ol.type-A { list-style-type: upper-alpha; }
+ol.type-i { list-style-type: lower-roman; }
+ol.type-I { list-style-type: upper-roman; }
+/* Apply the print table and row borders in general, on request from the RPC,
+and increase the contrast between border and odd row background slightly */
+table {
+  border: 1px solid #ddd;
+}
+td {
+  border-top: 1px solid #ddd;
+}
+tr {
+  break-inside: avoid;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f8f8f8;
+}
+/* Use style rules to govern display of the TOC. */
+@media screen and (max-width: 1023px) {
+  #toc nav { display: none; }
+  #toc.active nav { display: block; }
+}
+/* Add support for keepWithNext */
+.keepWithNext {
+  break-after: avoid-page;
+  break-after: avoid-page;
+}
+/* Add support for keepWithPrevious */
+.keepWithPrevious {
+  break-before: avoid-page;
+}
+/* Change the approach to avoiding breaks inside artwork etc. */
+figure, pre, table, .artwork, .sourcecode  {
+  break-before: auto;
+  break-after: auto;
+}
+/* Avoid breaks between <dt> and <dd> */
+dl {
+  break-before: auto;
+  break-inside: auto;
+}
+dt {
+  break-before: auto;
+  break-after: avoid-page;
+}
+dd {
+  break-before: avoid-page;
+  break-after: auto;
+  orphans: 3;
+  widows: 3
+}
+span.break, dd.break {
+  margin-bottom: 0;
+  min-height: 0;
+  break-before: auto;
+  break-inside: auto;
+  break-after: auto;
+}
+/* Undo break-before ToC */
+@media print {
+  #toc {
+    break-before: auto;
+  }
+}
+/* Text in compact lists should not get extra bottom margin space,
+   since that would makes the list not compact */
+ul.compact p, .ulCompact p,
+ol.compact p, .olCompact p {
+ margin: 0;
+}
+/* But the list as a whole needs the extra space at the end */
+section ul.compact,
+section .ulCompact,
+section ol.compact,
+section .olCompact {
+  margin-bottom: 1em;                    /* same as p not within ul.compact etc. */
+}
+/* The tt and code background above interferes with for instance table cell
+   backgrounds.  Changed to something a bit more selective. */
+tt, code {
+  background-color: transparent;
+}
+p tt, p code, li tt, li code, dt tt, dt code {
+  background-color: #f8f8f8;
+}
+/* Tweak the pre margin -- 0px doesn't come out well */
+pre {
+   margin-top: 0.5px;
+}
+/* Tweak the compact list text */
+ul.compact, .ulCompact,
+ol.compact, .olCompact,
+dl.compact, .dlCompact {
+  line-height: normal;
+}
+/* Don't add top margin for nested lists */
+li > ul, li > ol, li > dl,
+dd > ul, dd > ol, dd > dl,
+dl > dd > dl {
+  margin-top: initial;
+}
+/* Elements that should not be rendered on the same line as a <dt> */
+/* This should match the element list in writer.text.TextWriter.render_dl() */
+dd > div.artwork:first-child,
+dd > aside:first-child,
+dd > blockquote:first-child,
+dd > figure:first-child,
+dd > ol:first-child,
+dd > div.sourcecode:first-child,
+dd > table:first-child,
+dd > ul:first-child {
+  clear: left;
+}
+/* fix for weird browser behaviour when <dd/> is empty */
+dt+dd:empty::before{
+  content: "\00a0";
+}
+/* Make paragraph spacing inside <li> smaller than in body text, to fit better within the list */
+li > p {
+  margin-bottom: 0.5em
+}
+/* Don't let p margin spill out from inside list items */
+li > p:last-of-type:only-child {
+  margin-bottom: 0;
+}
+</style>
+<link href="rfc-local.css" rel="stylesheet" type="text/css">
+<script type="application/javascript">async function addMetadata(){try{const e=document.styleSheets[0].cssRules;for(let t=0;t<e.length;t++)if(/#identifiers/.exec(e[t].selectorText)){const a=e[t].cssText.replace("#identifiers","#external-updates");document.styleSheets[0].insertRule(a,document.styleSheets[0].cssRules.length)}}catch(e){console.log(e)}const e=document.getElementById("external-metadata");if(e)try{var t,a="",o=function(e){const t=document.getElementsByTagName("meta");for(let a=0;a<t.length;a++)if(t[a].getAttribute("name")===e)return t[a].getAttribute("content");return""}("rfc.number");if(o){t="https://www.rfc-editor.org/rfc/rfc"+o+".json";try{const e=await fetch(t);a=await e.json()}catch(e){t=document.URL.indexOf("html")>=0?document.URL.replace(/html$/,"json"):document.URL+".json";const o=await fetch(t);a=await o.json()}}if(!a)return;e.style.display="block";const s="",d="https://datatracker.ietf.org/doc",n="https://datatracker.ietf.org/ipr/search",c="https://www.rfc-editor.org/info",l=a.doc_id.toLowerCase(),i=a.doc_id.slice(0,3).toLowerCase(),f=a.doc_id.slice(3).replace(/^0+/,""),u={status:"Status",obsoletes:"Obsoletes",obsoleted_by:"Obsoleted By",updates:"Updates",updated_by:"Updated By",see_also:"See Also",errata_url:"Errata"};let h="<dl style='overflow:hidden' id='external-updates'>";["status","obsoletes","obsoleted_by","updates","updated_by","see_also","errata_url"].forEach(e=>{if("status"==e){a[e]=a[e].toLowerCase();var t=a[e].split(" "),o=t.length,w="",p=1;for(let e=0;e<o;e++)p<o?w=w+r(t[e])+" ":w+=r(t[e]),p++;a[e]=w}else if("obsoletes"==e||"obsoleted_by"==e||"updates"==e||"updated_by"==e){var g,m="",b=1;g=a[e].length;for(let t=0;t<g;t++)a[e][t]&&(a[e][t]=String(a[e][t]).toLowerCase(),m=b<g?m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>, ":m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>",b++);a[e]=m}else if("see_also"==e){var y,L="",C=1;y=a[e].length;for(let t=0;t<y;t++)if(a[e][t]){a[e][t]=String(a[e][t]);var _=a[e][t].slice(0,3),v=a[e][t].slice(3).replace(/^0+/,"");L=C<y?"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>, ":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>, ":"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>",C++}a[e]=L}else if("errata_url"==e){var R="";R=a[e]?R+"<a href='"+a[e]+"'>Errata exist</a> | <a href='"+d+"/"+l+"'>Datatracker</a>| <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>":"<a href='"+d+"/"+l+"'>Datatracker</a> | <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>",a[e]=R}""!=a[e]?"Errata"==u[e]?h+=`<dt>More info:</dt><dd>${a[e]}</dd>`:h+=`<dt>${u[e]}:</dt><dd>${a[e]}</dd>`:"Errata"==u[e]&&(h+=`<dt>More info:</dt><dd>${a[e]}</dd>`)}),h+="</dl>",e.innerHTML=h}catch(e){console.log(e)}else console.log("Could not locate metadata <div> element");function r(e){return e.charAt(0).toUpperCase()+e.slice(1)}}window.removeEventListener("load",addMetadata),window.addEventListener("load",addMetadata);</script>
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">APSIX</td>
+<td class="right">March 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Romanchuk</td>
+<td class="center">Expires 11 September 2026</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Network Working Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-romanchuk-apsix-00</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-03-10" class="published">10 March 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Informational</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2026-09-11">11 September 2026</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">O. Romanchuk</div>
+<div class="org">Independent</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">APSIX: Minimal Primitive Contract for Portable Semantic Runtimes</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document proposes <strong>APSIX</strong> (<em>Agent Portable Semantic Interface eXtension</em>) as a minimal primitive contract for portable semantic runtimes. The goal is not to standardize agent personalities, prompt formats, planner graphs, or model-specific reasoning behavior. The goal is to standardize the smallest useful contract of the runtime environment itself.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">The design reflects runtime patterns observed in early governed semantic-runtime implementations. In those implementations, the primary managed resource is bounded semantic territory, and spawned actor populations are the main source of pressure on that resource. APSIX defines the lower-layer contract required for such runtimes to become portable across implementations.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+<p id="section-abstract-3">The contract is intentionally narrow. It standardizes logical objects, lifecycle primitives, membrane-mediated decisions, capability semantics, event and provenance requirements, replay obligations, and progressive compliance profiles. It does not standardize model internals, scheduling strategies, storage engines, user interfaces, or application-specific orchestration logic.<a href="#section-abstract-3" class="pilcrow">¶</a></p>
+<p id="section-abstract-4">The document is written to stand on its own as a self-contained runtime specification, without dependency on unpublished external framing.<a href="#section-abstract-4" class="pilcrow">¶</a></p>
+<p id="section-abstract-5">This is a draft specification, not a final standard. The current name is provisional; the technical target is a portable primitive surface for governed semantic runtimes.<a href="#section-abstract-5" class="pilcrow">¶</a></p>
+<p id="section-abstract-6">This document is intended as a <strong>research specification</strong>, not as an immediate industry standardization proposal. Its purpose is to define a portability target early enough that emerging runtime implementations do not harden around mutually incompatible framework-local abstractions before a shared primitive vocabulary exists.<a href="#section-abstract-6" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 11 September 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-scope" class="internal xref">Scope</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-intended-use" class="internal xref">Intended Use</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.3">
+                <p id="section-toc.1-1.1.2.3.1" class="keepWithNext"><a href="#section-1.3" class="auto internal xref">1.3</a>.  <a href="#name-design-goals" class="internal xref">Design Goals</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conformance-language-and-te" class="internal xref">Conformance Language and Terminology</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.1">
+                <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-core-terms" class="internal xref">Core Terms</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-object-model" class="internal xref">Object Model</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-zone" class="internal xref">Zone</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-partition" class="internal xref">Partition</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-actor" class="internal xref">Actor</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
+                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-run" class="internal xref">Run</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.5">
+                <p id="section-toc.1-1.3.2.5.1"><a href="#section-3.5" class="auto internal xref">3.5</a>.  <a href="#name-artifact" class="internal xref">Artifact</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.6">
+                <p id="section-toc.1-1.3.2.6.1"><a href="#section-3.6" class="auto internal xref">3.6</a>.  <a href="#name-anchor-record" class="internal xref">Anchor Record</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.7">
+                <p id="section-toc.1-1.3.2.7.1"><a href="#section-3.7" class="auto internal xref">3.7</a>.  <a href="#name-membrane-decision-record" class="internal xref">Membrane Decision Record</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.8">
+                <p id="section-toc.1-1.3.2.8.1"><a href="#section-3.8" class="auto internal xref">3.8</a>.  <a href="#name-membrane-policy" class="internal xref">Membrane Policy</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.9">
+                <p id="section-toc.1-1.3.2.9.1"><a href="#section-3.9" class="auto internal xref">3.9</a>.  <a href="#name-event" class="internal xref">Event</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.10">
+                <p id="section-toc.1-1.3.2.10.1"><a href="#section-3.10" class="auto internal xref">3.10</a>. <a href="#name-ledger-manifest" class="internal xref">Ledger Manifest</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-primitive-set" class="internal xref">Primitive Set</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-zonedomain_spec-zone_id" class="internal xref"><code>zone(domain_spec) -&gt; zone_id</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-spawncapability_set-zone_id" class="internal xref"><code>spawn(capability_set, zone_id, intent) -&gt; actor_id | error</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-refinezone_id-scope_ref-hyp" class="internal xref"><code>refine(zone_id, scope_ref, hypothesis) -&gt; partition_set | error</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
+                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-executeactor_id-target_ref-" class="internal xref"><code>execute(actor_id, target_ref, capability, input_refs) -&gt; artifact | error</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.5">
+                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-anchorartifact_ref-zone_id-" class="internal xref"><code>anchor(artifact_ref, zone_id) -&gt; anchor_id | error</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.6">
+                <p id="section-toc.1-1.4.2.6.1"><a href="#section-4.6" class="auto internal xref">4.6</a>.  <a href="#name-harvestzone_id-filter-artif" class="internal xref"><code>harvest(zone_id, filter) -&gt; artifact_set</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.7">
+                <p id="section-toc.1-1.4.2.7.1"><a href="#section-4.7" class="auto internal xref">4.7</a>.  <a href="#name-freezezone_id-lifecycle_sta" class="internal xref"><code>freeze(zone_id) -&gt; lifecycle_state | error</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.8">
+                <p id="section-toc.1-1.4.2.8.1"><a href="#section-4.8" class="auto internal xref">4.8</a>.  <a href="#name-observezone_id-event_stream" class="internal xref"><code>observe(zone_id) -&gt; event_stream | event_slice</code></a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-capability-and-locality-mod" class="internal xref">Capability and Locality Model</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-core-capability-set" class="internal xref">Core Capability Set</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-capability-mask" class="internal xref">Capability Mask</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-locality-binding" class="internal xref">Locality Binding</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-role-derivation" class="internal xref">Role Derivation</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-membrane-semantics" class="internal xref">Membrane Semantics</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-complete-mediation" class="internal xref">Complete Mediation</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-decision-surface" class="internal xref">Decision Surface</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-decision-record" class="internal xref">Decision Record</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-budget-interaction" class="internal xref">Budget Interaction</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-artifact-provenance-and-rep" class="internal xref">Artifact, Provenance, and Replay Semantics</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-artifact-lifecycle" class="internal xref">Artifact Lifecycle</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-provenance" class="internal xref">Provenance</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-replay-contract" class="internal xref">Replay Contract</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
+                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-no-silent-promotion" class="internal xref">No Silent Promotion</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.5">
+                <p id="section-toc.1-1.7.2.5.1"><a href="#section-7.5" class="auto internal xref">7.5</a>.  <a href="#name-measurement-convention" class="internal xref">Measurement Convention</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-error-model" class="internal xref">Error Model</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-compliance-profiles" class="internal xref">Compliance Profiles</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-apsix-core" class="internal xref"><code>APSIX-core</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-apsix-governed" class="internal xref"><code>APSIX-governed</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
+                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-apsix-replayable" class="internal xref"><code>APSIX-replayable</code></a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4">
+                <p id="section-toc.1-1.9.2.4.1"><a href="#section-9.4" class="auto internal xref">9.4</a>.  <a href="#name-conformance-guidance" class="internal xref">Conformance Guidance</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-mapping-to-concrete-runtime" class="internal xref">Mapping to Concrete Runtimes</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#section-11" class="auto internal xref">11</a>. <a href="#name-non-goals" class="internal xref">Non-Goals</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#section-12" class="auto internal xref">12</a>. <a href="#name-open-issues" class="internal xref">Open Issues</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.13">
+            <p id="section-toc.1-1.13.1"><a href="#section-13" class="auto internal xref">13</a>. <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
+            <p id="section-toc.1-1.14.1"><a href="#section-14" class="auto internal xref">14</a>. <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#section-15" class="auto internal xref">15</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15.2.1">
+                <p id="section-toc.1-1.15.2.1.1"><a href="#section-15.1" class="auto internal xref">15.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.16">
+            <p id="section-toc.1-1.16.1"><a href="#section-16" class="auto internal xref">16</a>. <a href="#name-conclusion" class="internal xref">Conclusion</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">Agent runtimes are currently fragmented across framework-local abstractions. One system centers graphs, another centers conversations, another centers workflow automation, and another centers tool loops around a planner-worker core. This fragmentation weakens portability because applications depend on framework-specific object models rather than on a stable environment contract.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">The design intent of APSIX is analogous in spirit to the role POSIX played for operating systems: not to prescribe every implementation detail, but to standardize a small enough primitive surface that higher-level software can become portable across runtimes.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">The analogy to POSIX is aspirational in scope, not historical in maturity. The present ecosystem is still early. The purpose of this document is therefore not to claim that semantic runtimes have already converged enough for final standardization, but to provide a research-grade contract that implementations can target, compare against, and refine.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<p id="section-1-4">The conceptual shift is:<a href="#section-1-4" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-1-5.1">classical POSIX standardized process, file, and I/O primitives;<a href="#section-1-5.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-1-5.2">APSIX standardizes zone, membrane, artifact, and replay primitives for semantic runtimes.<a href="#section-1-5.2" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-1-6">The spec is derived from three commitments already stabilized in early governed semantic-runtime experimentation:<a href="#section-1-6" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="compact type-1" id="section-1-7">
+<li id="section-1-7.1">the runtime manages <strong>semantic territory</strong> rather than only tasks or model calls;<a href="#section-1-7.1" class="pilcrow">¶</a>
+</li>
+        <li id="section-1-7.2">expansion pressure comes from <strong>spawned actor populations</strong>;<a href="#section-1-7.2" class="pilcrow">¶</a>
+</li>
+        <li id="section-1-7.3">governability depends on <strong>non-bypassable membrane mediation</strong>, <strong>durable artifact admission</strong>, and <strong>replayable authoritative state</strong>.<a href="#section-1-7.3" class="pilcrow">¶</a>
+</li>
+      </ol>
+<p id="section-1-8">APSIX treats control of spawn-driven semantic epidemics as a core runtime concern. This document does not yet mandate one universal epidemic-control algorithm for all runtimes or all partition regimes. Instead, APSIX standardizes the governance surface and invariants through which within-partition and cross-partition expansion must be admitted, bounded, observed, and reconstructed. Different runtimes may implement this surface through single-writer regimes, bounded speculative swarms, hierarchical descendant spawning, merge selection, quarantine, culling, or other control strategies, provided those strategies remain membrane-governed, budget-visible, locality-scoped, and replayable.<a href="#section-1-8" class="pilcrow">¶</a></p>
+<div id="scope">
+<section id="section-1.1">
+        <h3 id="name-scope">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-scope" class="section-name selfRef">Scope</a>
+        </h3>
+<p id="section-1.1-1">This document defines:<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-1.1-2.1">a core object model for portable semantic runtimes;<a href="#section-1.1-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-2.2">a minimal primitive set derived from runtime lifecycle;<a href="#section-1.1-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-2.3">capability permissions and locality semantics;<a href="#section-1.1-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-2.4">membrane and budget semantics;<a href="#section-1.1-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-2.5">cross-boundary effect admission semantics;<a href="#section-1.1-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-2.6">event, provenance, and replay requirements;<a href="#section-1.1-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-2.7">compliance profiles.<a href="#section-1.1-2.7" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-1.1-3">This document does not define:<a href="#section-1.1-3" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-1.1-4.1">prompt formats or chain-of-thought conventions;<a href="#section-1.1-4.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-4.2">agent reasoning methods;<a href="#section-1.1-4.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-4.3">model selection and vendor APIs;<a href="#section-1.1-4.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-4.4">storage backends;<a href="#section-1.1-4.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-4.5">scheduling algorithms;<a href="#section-1.1-4.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-4.6">UI conventions;<a href="#section-1.1-4.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.1-4.7">planner-specific orchestration graphs.<a href="#section-1.1-4.7" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="intended-use">
+<section id="section-1.2">
+        <h3 id="name-intended-use">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-intended-use" class="section-name selfRef">Intended Use</a>
+        </h3>
+<p id="section-1.2-1">APSIX is intended to serve as:<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-1.2-2.1">a portability target for experimental semantic runtime implementations;<a href="#section-1.2-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.2-2.2">a comparison layer across framework-local runtimes;<a href="#section-1.2-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.2-2.3">a basis for future conformance tests around membrane, provenance, replay behavior, and lifecycle-trace invariants.<a href="#section-1.2-2.3" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-1.2-3">It is not yet intended to serve as:<a href="#section-1.2-3" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-1.2-4.1">a finalized industry interoperability standard;<a href="#section-1.2-4.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.2-4.2">a replacement for existing agent SDK APIs;<a href="#section-1.2-4.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-1.2-4.3">a mandate on internal scheduler or storage architecture.<a href="#section-1.2-4.3" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="design-goals">
+<section id="section-1.3">
+        <h3 id="name-design-goals">
+<a href="#section-1.3" class="section-number selfRef">1.3. </a><a href="#name-design-goals" class="section-name selfRef">Design Goals</a>
+        </h3>
+<p id="section-1.3-1">The design goals are:<a href="#section-1.3-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="compact type-1" id="section-1.3-2">
+<li id="section-1.3-2.1">
+            <strong>Portability</strong>: applications should rely on runtime primitives that survive framework changes.<a href="#section-1.3-2.1" class="pilcrow">¶</a>
+</li>
+          <li id="section-1.3-2.2">
+            <strong>Governability</strong>: the runtime must expose an enforcement locus for spawn, refinement, anchoring, and cross-boundary effects.<a href="#section-1.3-2.2" class="pilcrow">¶</a>
+</li>
+          <li id="section-1.3-2.3">
+            <strong>Observability</strong>: the runtime must emit stable records of semantic expansion and state transitions.<a href="#section-1.3-2.3" class="pilcrow">¶</a>
+</li>
+          <li id="section-1.3-2.4">
+            <strong>Minimality</strong>: the primitive set should be small enough to implement and reason about.<a href="#section-1.3-2.4" class="pilcrow">¶</a>
+</li>
+          <li id="section-1.3-2.5">
+            <strong>Replayability</strong>: authoritative state must be reconstructible without reproducing original latent reasoning traces.<a href="#section-1.3-2.5" class="pilcrow">¶</a>
+</li>
+          <li id="section-1.3-2.6">
+            <strong>Extensibility</strong>: richer runtimes should be able to add features without breaking core semantics.<a href="#section-1.3-2.6" class="pilcrow">¶</a>
+</li>
+          <li id="section-1.3-2.7">
+            <strong>Epidemic Control Extensibility</strong>: the contract should support multiple partition-local spawn-control algorithms without losing governability or replay semantics.<a href="#section-1.3-2.7" class="pilcrow">¶</a>
+</li>
+        </ol>
+</section>
+</div>
+</section>
+</div>
+<div id="conformance-language-and-terminology">
+<section id="section-2">
+      <h2 id="name-conformance-language-and-te">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conformance-language-and-te" class="section-name selfRef">Conformance Language and Terminology</a>
+      </h2>
+<p id="section-2-1">The key words <span class="bcp14">MUST</span>, <span class="bcp14">MUST NOT</span>, <span class="bcp14">REQUIRED</span>, <span class="bcp14">SHALL</span>, <span class="bcp14">SHALL NOT</span>,
+<span class="bcp14">SHOULD</span>, <span class="bcp14">SHOULD NOT</span>, <span class="bcp14">RECOMMENDED</span>, <span class="bcp14">NOT RECOMMENDED</span>, <span class="bcp14">MAY</span>, and
+<span class="bcp14">OPTIONAL</span> in this document are to be interpreted as described in BCP 14
+[RFC2119] [RFC8174] when, and only when, they appear in all capitals, as shown
+here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<div id="core-terms">
+<section id="section-2.1">
+        <h3 id="name-core-terms">
+<a href="#section-2.1" class="section-number selfRef">2.1. </a><a href="#name-core-terms" class="section-name selfRef">Core Terms</a>
+        </h3>
+<p id="section-2.1-1"><strong>Domain</strong>: a bounded semantic representation that supports localization, refinement, anchoring, and harvest.<a href="#section-2.1-1" class="pilcrow">¶</a></p>
+<p id="section-2.1-2"><strong>Zone</strong>: the runtime embodiment of a domain, including state, policy, budgets, partitions, and artifacts.<a href="#section-2.1-2" class="pilcrow">¶</a></p>
+<p id="section-2.1-3"><strong>Partition</strong>: a bounded sub-zone scope that defines the default unit of locality and refinement.<a href="#section-2.1-3" class="pilcrow">¶</a></p>
+<p id="section-2.1-4"><strong>Actor</strong>: a spawned runtime instance operating under a capability mask and budget share.<a href="#section-2.1-4" class="pilcrow">¶</a></p>
+<p id="section-2.1-5"><strong>Artifact</strong>: a produced object that can be retained, validated, rejected, anchored, or harvested.<a href="#section-2.1-5" class="pilcrow">¶</a></p>
+<p id="section-2.1-6"><strong>Anchor</strong>: the promotion of an artifact into durable authoritative runtime state.<a href="#section-2.1-6" class="pilcrow">¶</a></p>
+<p id="section-2.1-7"><strong>Membrane</strong>: the enforcement boundary around a zone and its sensitive state transitions.<a href="#section-2.1-7" class="pilcrow">¶</a></p>
+<p id="section-2.1-8"><strong>Budget</strong>: an explicit bound on expansion, actor creation, artifact volume, validation cost, or other governed quantities.<a href="#section-2.1-8" class="pilcrow">¶</a></p>
+<p id="section-2.1-9"><strong>Run</strong>: a concrete execution attempt or recovery/harvest attempt associated with an actor or task scope and having a terminal outcome.<a href="#section-2.1-9" class="pilcrow">¶</a></p>
+<p id="section-2.1-10"><strong>Replay</strong>: authoritative reconstruction of zone state from events, anchors, and checkpoints; not reproduction of token-level reasoning.<a href="#section-2.1-10" class="pilcrow">¶</a></p>
+<p id="section-2.1-11"><strong>Harvest</strong>: a runtime operation that returns anchored outputs from a zone.<a href="#section-2.1-11" class="pilcrow">¶</a></p>
+<p id="section-2.1-12"><strong>Effect</strong>: an external or cross-boundary action whose primary result is not only a local artifact, but a mutation, publication, delivery, or other action against another authority boundary.<a href="#section-2.1-12" class="pilcrow">¶</a></p>
+<p id="section-2.1-13"><strong>Spawn Regime</strong>: an implementation-defined policy governing the propagation dynamics of actor creation within a zone or partition, including concurrency limits, descendant spawning rules, competition, throttling, quarantine, merge, or termination behavior.<a href="#section-2.1-13" class="pilcrow">¶</a></p>
+<p id="section-2.1-14"><strong>Ledger Manifest</strong>: a stable description of the replay-relevant ledger surfaces for a zone, including schema versions, runtime profile, measurement convention, and record paths.<a href="#section-2.1-14" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="object-model">
+<section id="section-3">
+      <h2 id="name-object-model">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-object-model" class="section-name selfRef">Object Model</a>
+      </h2>
+<p id="section-3-1">An APSIX-compliant runtime MUST expose the following logical objects.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-2">These objects define logical runtime state, not a mandated storage substrate. Implementations MAY represent them using graphs, databases, event streams, logs, or other internal structures, provided the normative semantics of the contract remain observable.<a href="#section-3-2" class="pilcrow">¶</a></p>
+<div id="zone">
+<section id="section-3.1">
+        <h3 id="name-zone">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-zone" class="section-name selfRef">Zone</a>
+        </h3>
+<p id="section-3.1-1">A zone MUST have at least:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.1-2.1">
+            <code>zone_id</code><a href="#section-3.1-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.1-2.2">
+            <code>domain_spec</code><a href="#section-3.1-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.1-2.3">
+            <code>lifecycle_state</code><a href="#section-3.1-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.1-2.4">
+            <code>membrane_policy_version</code><a href="#section-3.1-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.1-2.5">
+            <code>budget_state</code><a href="#section-3.1-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.1-2.6">
+            <code>partition_state</code><a href="#section-3.1-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.1-2.7">
+            <code>authoritative_state_ref</code><a href="#section-3.1-2.7" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-3.1-3">In <code>APSIX-governed</code> and <code>APSIX-replayable</code>, a zone SHOULD additionally expose:<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.1-4.1">
+            <code>output_boundary_ref</code> or equivalent authoritative harvest target surface<a href="#section-3.1-4.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.1-4.2">
+            <code>ledger_state</code><a href="#section-3.1-4.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.1-4.3">
+            <code>ledger_manifest_ref</code>, if a separate manifest object is used<a href="#section-3.1-4.3" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-3.1-5">Optional implementation fields MAY include ownership metadata, external bindings, topology hints, or storage references.<a href="#section-3.1-5" class="pilcrow">¶</a></p>
+<p id="section-3.1-6"><code>authoritative_state_ref</code> denotes the runtime's single authoritative execution state for the zone. Implementations MAY expose dashboards, plans, manifests, or other operator-facing projections, but such projections MUST NOT function as independent control planes with authority to diverge from authoritative zone state.<a href="#section-3.1-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="partition">
+<section id="section-3.2">
+        <h3 id="name-partition">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-partition" class="section-name selfRef">Partition</a>
+        </h3>
+<p id="section-3.2-1">A partition MUST have at least:<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.2-2.1">
+            <code>partition_id</code><a href="#section-3.2-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.2-2.2">
+            <code>zone_id</code><a href="#section-3.2-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.2-2.3">
+            <code>scope_ref</code><a href="#section-3.2-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.2-2.4">
+            <code>status</code><a href="#section-3.2-2.4" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-3.2-3">The runtime MAY materialize partitions explicitly or derive them from a structured domain substrate, but partition identity and locality semantics MUST be observable.<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="actor">
+<section id="section-3.3">
+        <h3 id="name-actor">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-actor" class="section-name selfRef">Actor</a>
+        </h3>
+<p id="section-3.3-1">An actor MUST have at least:<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.3-2.1">
+            <code>actor_id</code><a href="#section-3.3-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.3-2.2">
+            <code>zone_id</code><a href="#section-3.3-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.3-2.3">
+            <code>admitted_partitions</code><a href="#section-3.3-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.3-2.4">
+            <code>capability_mask</code><a href="#section-3.3-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.3-2.5">
+            <code>budget_share</code><a href="#section-3.3-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.3-2.6">
+            <code>intent</code><a href="#section-3.3-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.3-2.7">
+            <code>status</code><a href="#section-3.3-2.7" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-3.3-3">An actor MAY be ephemeral or persistent.<a href="#section-3.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="run">
+<section id="section-3.4">
+        <h3 id="name-run">
+<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-run" class="section-name selfRef">Run</a>
+        </h3>
+<p id="section-3.4-1">A run MUST have at least:<a href="#section-3.4-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.4-2.1">
+            <code>run_id</code><a href="#section-3.4-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.4-2.2">
+            <code>zone_id</code><a href="#section-3.4-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.4-2.3">
+            <code>request_id</code><a href="#section-3.4-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.4-2.4">
+            <code>run_kind</code><a href="#section-3.4-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.4-2.5">
+            <code>status</code><a href="#section-3.4-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.4-2.6">
+            <code>started_at</code><a href="#section-3.4-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.4-2.7">
+            <code>ended_at</code> or equivalent terminal timestamp<a href="#section-3.4-2.7" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-3.4-3">If the runtime associates runs with an actor or partition-local task, it MUST expose that binding.<a href="#section-3.4-3" class="pilcrow">¶</a></p>
+<p id="section-3.4-4">Run kinds MUST distinguish at minimum:<a href="#section-3.4-4" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.4-5.1">
+            <code>execution_run</code><a href="#section-3.4-5.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.4-5.2">
+            <code>recovery_run</code>, if recovery is supported<a href="#section-3.4-5.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.4-5.3">
+            <code>harvest_run</code>, if harvest materializes execution-like work<a href="#section-3.4-5.3" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="artifact">
+<section id="section-3.5">
+        <h3 id="name-artifact">
+<a href="#section-3.5" class="section-number selfRef">3.5. </a><a href="#name-artifact" class="section-name selfRef">Artifact</a>
+        </h3>
+<p id="section-3.5-1">An artifact MUST have at least:<a href="#section-3.5-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.5-2.1">
+            <code>artifact_id</code> or provisional identifier<a href="#section-3.5-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.5-2.2">
+            <code>origin_actor_id</code><a href="#section-3.5-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.5-2.3">
+            <code>zone_id</code><a href="#section-3.5-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.5-2.4">
+            <code>artifact_type</code><a href="#section-3.5-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.5-2.5">
+            <code>status</code><a href="#section-3.5-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.5-2.6">
+            <code>provenance</code><a href="#section-3.5-2.6" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-3.5-3">Artifact statuses MUST distinguish at least:<a href="#section-3.5-3" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.5-4.1">
+            <code>generated</code><a href="#section-3.5-4.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.5-4.2">
+            <code>anchored</code><a href="#section-3.5-4.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.5-4.3">
+            <code>harvested</code><a href="#section-3.5-4.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.5-4.4">
+            <code>rejected</code><a href="#section-3.5-4.4" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="anchor-record">
+<section id="section-3.6">
+        <h3 id="name-anchor-record">
+<a href="#section-3.6" class="section-number selfRef">3.6. </a><a href="#name-anchor-record" class="section-name selfRef">Anchor Record</a>
+        </h3>
+<p id="section-3.6-1">An anchored artifact MUST have an associated anchor record containing at least:<a href="#section-3.6-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.6-2.1">
+            <code>anchor_id</code><a href="#section-3.6-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.6-2.2">
+            <code>artifact_id</code><a href="#section-3.6-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.6-2.3">
+            <code>zone_id</code><a href="#section-3.6-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.6-2.4">
+            <code>policy_version</code><a href="#section-3.6-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.6-2.5">
+            <code>decision</code><a href="#section-3.6-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.6-2.6">
+            <code>timestamp_or_order</code><a href="#section-3.6-2.6" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="membrane-decision-record">
+<section id="section-3.7">
+        <h3 id="name-membrane-decision-record">
+<a href="#section-3.7" class="section-number selfRef">3.7. </a><a href="#name-membrane-decision-record" class="section-name selfRef">Membrane Decision Record</a>
+        </h3>
+<p id="section-3.7-1">A membrane-mediated decision MUST have an auditable decision record containing at least:<a href="#section-3.7-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.7-2.1">
+            <code>decision_id</code><a href="#section-3.7-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.2">
+            <code>request_id</code><a href="#section-3.7-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.3">
+            <code>zone_id</code><a href="#section-3.7-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.4">
+            <code>request_type</code><a href="#section-3.7-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.5">
+            <code>subject_ref</code><a href="#section-3.7-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.6">
+            <code>decision</code><a href="#section-3.7-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.7">
+            <code>policy_version</code><a href="#section-3.7-2.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.8">
+            <code>reason_code</code><a href="#section-3.7-2.8" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.9">
+            <code>capability_basis</code><a href="#section-3.7-2.9" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.10">
+            <code>budget_context</code><a href="#section-3.7-2.10" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.7-2.11">
+            <code>timestamp_or_order</code><a href="#section-3.7-2.11" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="membrane-policy">
+<section id="section-3.8">
+        <h3 id="name-membrane-policy">
+<a href="#section-3.8" class="section-number selfRef">3.8. </a><a href="#name-membrane-policy" class="section-name selfRef">Membrane Policy</a>
+        </h3>
+<p id="section-3.8-1">A membrane policy MUST define:<a href="#section-3.8-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.8-2.1">spawn admissibility rules<a href="#section-3.8-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.8-2.2">within-partition population-control rules, if multiple actors per partition are supported<a href="#section-3.8-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.8-2.3">refinement admissibility rules<a href="#section-3.8-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.8-2.4">cross-zone and cross-partition effect rules<a href="#section-3.8-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.8-2.5">external effect admission rules<a href="#section-3.8-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.8-2.6">artifact promotion rules<a href="#section-3.8-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.8-2.7">escalation rules<a href="#section-3.8-2.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.8-2.8">budget interaction rules<a href="#section-3.8-2.8" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.8-2.9">epidemic-control rules such as throttling, quarantine, culling, merge, or equivalent growth-control behavior, if such controls are supported<a href="#section-3.8-2.9" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="event">
+<section id="section-3.9">
+        <h3 id="name-event">
+<a href="#section-3.9" class="section-number selfRef">3.9. </a><a href="#name-event" class="section-name selfRef">Event</a>
+        </h3>
+<p id="section-3.9-1">The runtime MUST produce an event stream or event log containing at least:<a href="#section-3.9-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.9-2.1">zone creation<a href="#section-3.9-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-2.2">actor admission request and decision<a href="#section-3.9-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-2.3">refinement event<a href="#section-3.9-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-2.4">execute completion or failure<a href="#section-3.9-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-2.5">external effect request, decision, completion, or failure, if such effects are supported<a href="#section-3.9-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-2.6">anchor decision<a href="#section-3.9-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-2.7">harvest event<a href="#section-3.9-2.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-2.8">freeze or closure event<a href="#section-3.9-2.8" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-3.9-3">Each event record MUST expose at least:<a href="#section-3.9-3" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.9-4.1">
+            <code>event_id</code><a href="#section-3.9-4.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-4.2">
+            <code>seq_no</code> or equivalent global authoritative order index<a href="#section-3.9-4.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-4.3">
+            <code>zone_id</code><a href="#section-3.9-4.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-4.4">
+            <code>event_type</code><a href="#section-3.9-4.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-4.5">
+            <code>subject_ref</code><a href="#section-3.9-4.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-4.6">
+            <code>request_id</code>, if the event is part of a membrane-mediated request chain<a href="#section-3.9-4.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-4.7">
+            <code>run_id</code>, if the event is part of a concrete execution attempt<a href="#section-3.9-4.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-4.8">
+            <code>timestamp_or_order</code><a href="#section-3.9-4.8" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.9-4.9">
+            <code>causal_ref</code> or equivalent parent reference, if such ordering is supported<a href="#section-3.9-4.9" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-3.9-5">If a runtime stores events, decisions, and anchors in separate ledgers, those ledgers MUST still preserve one authoritative cross-ledger ordering surface such as a shared monotonic <code>seq_no</code>.<a href="#section-3.9-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="ledger-manifest">
+<section id="section-3.10">
+        <h3 id="name-ledger-manifest">
+<a href="#section-3.10" class="section-number selfRef">3.10. </a><a href="#name-ledger-manifest" class="section-name selfRef">Ledger Manifest</a>
+        </h3>
+<p id="section-3.10-1"><code>APSIX-replayable</code> runtimes SHOULD expose a ledger manifest containing at least:<a href="#section-3.10-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-3.10-2.1">
+            <code>zone_id</code><a href="#section-3.10-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.10-2.2">
+            <code>schema_version</code><a href="#section-3.10-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.10-2.3">
+            <code>runtime_profile</code><a href="#section-3.10-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.10-2.4">
+            <code>measurement_convention</code>, if telemetry proxies are exposed<a href="#section-3.10-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.10-2.5">replay-relevant record paths or references<a href="#section-3.10-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-3.10-2.6">record schema version or equivalent compatibility indicator<a href="#section-3.10-2.6" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="primitive-set">
+<section id="section-4">
+      <h2 id="name-primitive-set">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-primitive-set" class="section-name selfRef">Primitive Set</a>
+      </h2>
+<p id="section-4-1">APSIX-core runtimes MUST implement the lifecycle primitives in Sections 4.1-4.7. Governed and replayable profiles MUST additionally implement the observability primitive in Section 4.8.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<div id="zone-domain-spec-zone-id">
+<section id="section-4.1">
+        <h3 id="name-zonedomain_spec-zone_id">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-zonedomain_spec-zone_id" class="section-name selfRef"><code>zone(domain_spec) -&gt; zone_id</code></a>
+        </h3>
+<p id="section-4.1-1">Creates a zone from a domain specification.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">Requirements:<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-4.1-3.1">MUST initialize membrane and budget state.<a href="#section-4.1-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.1-3.2">MUST initialize partition state.<a href="#section-4.1-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.1-3.3">If the runtime exposes harvested outputs, MUST define an authoritative output boundary or equivalent harvest target surface for the zone.<a href="#section-4.1-3.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.1-3.4">SHOULD bind or snapshot the authoritative output boundary for later harvest validation.<a href="#section-4.1-3.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.1-3.5">MUST return a stable <code>zone_id</code>.<a href="#section-4.1-3.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.1-3.6">MUST emit a zone creation event.<a href="#section-4.1-3.6" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="spawn-capability-set-zone-id-intent-actor-id-error">
+<section id="section-4.2">
+        <h3 id="name-spawncapability_set-zone_id">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-spawncapability_set-zone_id" class="section-name selfRef"><code>spawn(capability_set, zone_id, intent) -&gt; actor_id | error</code></a>
+        </h3>
+<p id="section-4.2-1">Requests creation of an actor in a zone.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2-2">Requirements:<a href="#section-4.2-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-4.2-3.1">Each invocation of <code>spawn()</code> MUST admit at most one actor. Multi-actor populations MUST arise through repeated or descendant invocations of <code>spawn()</code>, not through batch return of a single call.<a href="#section-4.2-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.2">MUST assign admitted partition scope or return an explicit placement failure.<a href="#section-4.2-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.3">MUST assign a capability mask and budget share.<a href="#section-4.2-3.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.4">MUST fail deterministically when policy or budget denies creation.<a href="#section-4.2-3.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.5">MUST emit both request and decision events.<a href="#section-4.2-3.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.6">In <code>APSIX-governed</code> and <code>APSIX-replayable</code>, spawn request and decision surfaces MUST be correlated by a stable <code>request_id</code>.<a href="#section-4.2-3.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.7">If actor execution later materializes, the runtime MUST expose a <code>run_id</code> or equivalent execution identifier for that concrete attempt.<a href="#section-4.2-3.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.8">A spawned actor operating within an admitted partition MAY decline further expansion, request refinement, or request descendant spawn under an implementation-defined <code>Spawn Regime</code>.<a href="#section-4.2-3.8" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.9">If the runtime supports multiple actors within one partition or descendant spawning from within a partition, spawn decisions MUST remain locality-scoped and auditable at that finer-grained population boundary.<a href="#section-4.2-3.9" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.10">Descendant spawn, if supported, MUST remain lineage-visible, locality-scoped, budget-visible, and membrane-mediated.<a href="#section-4.2-3.10" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.11">A runtime MUST NOT place an actor or execution into a live running state unless spawn admission has already succeeded for that actor or execution.<a href="#section-4.2-3.11" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.12">A runtime MUST NOT treat queued or budget-deferred spawn as equivalent to live running execution.<a href="#section-4.2-3.12" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.2-3.13">In <code>APSIX-governed</code> and <code>APSIX-replayable</code>, MUST be membrane-mediated.<a href="#section-4.2-3.13" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="refine-zone-id-scope-ref-hypothesis-partition-set-error">
+<section id="section-4.3">
+        <h3 id="name-refinezone_id-scope_ref-hyp">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-refinezone_id-scope_ref-hyp" class="section-name selfRef"><code>refine(zone_id, scope_ref, hypothesis) -&gt; partition_set | error</code></a>
+        </h3>
+<p id="section-4.3-1">Requests semantic decomposition or restructuring within a zone.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<p id="section-4.3-2">Requirements:<a href="#section-4.3-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-4.3-3.1">MUST be recorded as a replayable event.<a href="#section-4.3-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.3-3.2">MUST preserve lineage from prior scope.<a href="#section-4.3-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.3-3.3">MUST NOT silently enlarge zone scope without explicit membrane approval.<a href="#section-4.3-3.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.3-3.4">SHOULD preserve stable partition identity where possible.<a href="#section-4.3-3.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.3-3.5">In <code>APSIX-governed</code> and <code>APSIX-replayable</code>, policy-sensitive refinement MUST be membrane-mediated.<a href="#section-4.3-3.5" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="execute-actor-id-target-ref-capability-input-refs-artifact-error">
+<section id="section-4.4">
+        <h3 id="name-executeactor_id-target_ref-">
+<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-executeactor_id-target_ref-" class="section-name selfRef"><code>execute(actor_id, target_ref, capability, input_refs) -&gt; artifact | error</code></a>
+        </h3>
+<p id="section-4.4-1">Applies a capability to a zone target or artifact target.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<p id="section-4.4-2">Requirements:<a href="#section-4.4-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-4.4-3.1">MUST verify actor authorization for the requested capability.<a href="#section-4.4-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.4-3.2">MUST verify target locality against admitted partitions or membrane-approved boundary crossing.<a href="#section-4.4-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.4-3.3">MUST return an artifact or structured failure.<a href="#section-4.4-3.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.4-3.4">MUST record provenance links to input references.<a href="#section-4.4-3.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.4-3.5">MUST distinguish artifact-producing executions from effectful requests that attempt to mutate or publish across another authority boundary.<a href="#section-4.4-3.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.4-3.6">An execution MAY produce artifacts representing further runtime requests such as refinement requests or spawn requests rather than final outputs.<a href="#section-4.4-3.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.4-3.7">If the runtime materializes partition-local candidate outputs prior to harvest, it MUST keep those candidate outputs distinct from harvested authoritative outputs.<a href="#section-4.4-3.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.4-3.8">If an execution is cancelled, aborted, or force-terminated by runtime policy, the runtime MUST expose a terminal outcome for that execution rather than leaving it in an ambiguous live state.<a href="#section-4.4-3.8" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.4-3.9">Retries, recoveries, and resumed executions SHOULD be represented as distinct runs rather than silently overwriting prior execution outcomes.<a href="#section-4.4-3.9" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.4-3.10">If the runtime supports external or cross-boundary effects, <code>APSIX-governed</code> and <code>APSIX-replayable</code> profiles MUST subject those effects to membrane mediation and auditable event records before completion.<a href="#section-4.4-3.10" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="anchor-artifact-ref-zone-id-anchor-id-error">
+<section id="section-4.5">
+        <h3 id="name-anchorartifact_ref-zone_id-">
+<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-anchorartifact_ref-zone_id-" class="section-name selfRef"><code>anchor(artifact_ref, zone_id) -&gt; anchor_id | error</code></a>
+        </h3>
+<p id="section-4.5-1">Promotes an artifact into anchored state.<a href="#section-4.5-1" class="pilcrow">¶</a></p>
+<p id="section-4.5-2">Requirements:<a href="#section-4.5-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-4.5-3.1">MUST create or confirm stable artifact identity.<a href="#section-4.5-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.5-3.2">MUST create an anchor record.<a href="#section-4.5-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.5-3.3">MUST record decision provenance sufficient for replay.<a href="#section-4.5-3.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.5-3.4">MUST NOT silently promote generated artifacts to anchored state without an explicit anchoring transition.<a href="#section-4.5-3.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.5-3.5">In <code>APSIX-governed</code> and <code>APSIX-replayable</code>, MUST be membrane-mediated.<a href="#section-4.5-3.5" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="harvest-zone-id-filter-artifact-set">
+<section id="section-4.6">
+        <h3 id="name-harvestzone_id-filter-artif">
+<a href="#section-4.6" class="section-number selfRef">4.6. </a><a href="#name-harvestzone_id-filter-artif" class="section-name selfRef"><code>harvest(zone_id, filter) -&gt; artifact_set</code></a>
+        </h3>
+<p id="section-4.6-1">Returns anchored artifacts matching a filter or harvest profile.<a href="#section-4.6-1" class="pilcrow">¶</a></p>
+<p id="section-4.6-2">Requirements:<a href="#section-4.6-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-4.6-3.1">MUST NOT implicitly anchor unanchored artifacts.<a href="#section-4.6-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.6-3.2">SHOULD support deterministic filtering.<a href="#section-4.6-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.6-3.3">SHOULD preserve or validate the zone's authoritative output boundary; if that boundary has drifted since zone creation, a governed runtime SHOULD deny or escalate harvest rather than silently reinterpreting outputs.<a href="#section-4.6-3.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.6-3.4">If the runtime uses partition-local candidate surfaces, harvest MUST perform an explicit transition into the authoritative output boundary rather than treating candidate-local paths as already harvested final outputs.<a href="#section-4.6-3.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.6-3.5">MUST emit a harvest event.<a href="#section-4.6-3.5" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="freeze-zone-id-lifecycle-state-error">
+<section id="section-4.7">
+        <h3 id="name-freezezone_id-lifecycle_sta">
+<a href="#section-4.7" class="section-number selfRef">4.7. </a><a href="#name-freezezone_id-lifecycle_sta" class="section-name selfRef"><code>freeze(zone_id) -&gt; lifecycle_state | error</code></a>
+        </h3>
+<p id="section-4.7-1">Transitions a zone into a closure regime.<a href="#section-4.7-1" class="pilcrow">¶</a></p>
+<p id="section-4.7-2">Requirements:<a href="#section-4.7-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-4.7-3.1">MUST deny further expansion primitives by default after success.<a href="#section-4.7-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.7-3.2">MUST emit a freeze or closure event.<a href="#section-4.7-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.7-3.3">SHOULD clean zone-owned ephemeral runtime resources such as worktrees, temporary branches, sandboxes, or equivalent execution residues.<a href="#section-4.7-3.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.7-3.4">MUST NOT be required to re-harvest already harvested outputs in order to stabilize the zone.<a href="#section-4.7-3.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.7-3.5">MUST NOT make previously anchored artifacts unreachable for replay or later harvest unless an explicit abandonment, archival, or retention policy is itself recorded as authoritative state.<a href="#section-4.7-3.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.7-3.6">SHOULD preserve harvest and replay access.<a href="#section-4.7-3.6" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="observe-zone-id-event-stream-event-slice">
+<section id="section-4.8">
+        <h3 id="name-observezone_id-event_stream">
+<a href="#section-4.8" class="section-number selfRef">4.8. </a><a href="#name-observezone_id-event_stream" class="section-name selfRef"><code>observe(zone_id) -&gt; event_stream | event_slice</code></a>
+        </h3>
+<p id="section-4.8-1">Returns runtime events for the zone.<a href="#section-4.8-1" class="pilcrow">¶</a></p>
+<p id="section-4.8-2">Requirements:<a href="#section-4.8-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-4.8-3.1">MUST expose membrane decisions and artifact lifecycle transitions.<a href="#section-4.8-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.8-3.2">MUST expose external effect decisions and outcomes, if such effects are supported.<a href="#section-4.8-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.8-3.3">MUST expose terminal failure, cancellation, or abort outcomes for actor executions when the runtime supports those outcomes.<a href="#section-4.8-3.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.8-3.4">MUST preserve authoritative ordering semantics.<a href="#section-4.8-3.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.8-3.5">In <code>APSIX-governed</code> and <code>APSIX-replayable</code>, ordering SHOULD be reconstructible through a stable cross-ledger ordering surface such as <code>seq_no</code>, not only through wall-clock timestamps.<a href="#section-4.8-3.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.8-3.6">In <code>APSIX-replayable</code>, request/decision/run correlation surfaces SHOULD be observable.<a href="#section-4.8-3.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.8-3.7">Decision and event surfaces MUST be sound with respect to authoritative zone state: an implementation MUST NOT emit or retain admission, anchor, or lifecycle records that assert a zone state transition that did not occur in authoritative state.<a href="#section-4.8-3.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-4.8-3.8">MAY paginate or stream.<a href="#section-4.8-3.8" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="capability-and-locality-model">
+<section id="section-5">
+      <h2 id="name-capability-and-locality-mod">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-capability-and-locality-mod" class="section-name selfRef">Capability and Locality Model</a>
+      </h2>
+<p id="section-5-1">Capabilities are primitive permissions in APSIX. Roles are derived from them.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="core-capability-set">
+<section id="section-5.1">
+        <h3 id="name-core-capability-set">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-core-capability-set" class="section-name selfRef">Core Capability Set</a>
+        </h3>
+<p id="section-5.1-1">An implementation SHOULD support capability names equivalent to:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-5.1-2.1">
+            <code>refine</code><a href="#section-5.1-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-5.1-2.2">
+            <code>spawn</code><a href="#section-5.1-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-5.1-2.3">
+            <code>execute</code><a href="#section-5.1-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-5.1-2.4">
+            <code>anchor</code><a href="#section-5.1-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-5.1-2.5">
+            <code>harvest</code><a href="#section-5.1-2.5" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-5.1-3">Equivalent implementation-local names MAY be used if their semantics are documented. Implementations MAY define richer capability vocabularies above this primitive substrate.<a href="#section-5.1-3" class="pilcrow">¶</a></p>
+<p id="section-5.1-4"><code>freeze()</code> is a zone-administrative closure primitive and need not be exposed as a general actor capability.<a href="#section-5.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="capability-mask">
+<section id="section-5.2">
+        <h3 id="name-capability-mask">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-capability-mask" class="section-name selfRef">Capability Mask</a>
+        </h3>
+<p id="section-5.2-1">Every actor MUST operate under a capability mask. The runtime MUST reject attempts to execute a primitive that exceeds the actor's mask.<a href="#section-5.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="locality-binding">
+<section id="section-5.3">
+        <h3 id="name-locality-binding">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-locality-binding" class="section-name selfRef">Locality Binding</a>
+        </h3>
+<p id="section-5.3-1">Capability grants MUST be interpreted relative to locality. Authorization is incomplete unless the runtime can answer both:<a href="#section-5.3-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-5.3-2.1">which operation class is permitted;<a href="#section-5.3-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-5.3-2.2">over which admitted partition set it is permitted.<a href="#section-5.3-2.2" class="pilcrow">¶</a>
+</li>
+        </ul>
+</section>
+</div>
+<div id="role-derivation">
+<section id="section-5.4">
+        <h3 id="name-role-derivation">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-role-derivation" class="section-name selfRef">Role Derivation</a>
+        </h3>
+<p id="section-5.4-1">Roles are not normative objects in APSIX. A runtime MAY expose roles for ergonomics, but the normative substrate MUST remain the capability mask plus locality binding.<a href="#section-5.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="membrane-semantics">
+<section id="section-6">
+      <h2 id="name-membrane-semantics">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-membrane-semantics" class="section-name selfRef">Membrane Semantics</a>
+      </h2>
+<p id="section-6-1">The membrane is the critical enforcement locus of APSIX.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<div id="complete-mediation">
+<section id="section-6.1">
+        <h3 id="name-complete-mediation">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-complete-mediation" class="section-name selfRef">Complete Mediation</a>
+        </h3>
+<p id="section-6.1-1">The runtime MUST subject the following operations to membrane mediation:<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-6.1-2.1">actor creation<a href="#section-6.1-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.1-2.2">policy-sensitive refinement<a href="#section-6.1-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.1-2.3">cross-partition effects<a href="#section-6.1-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.1-2.4">cross-zone effects<a href="#section-6.1-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.1-2.5">external effects against other authority boundaries<a href="#section-6.1-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.1-2.6">artifact promotion<a href="#section-6.1-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.1-2.7">budget-sensitive expansion<a href="#section-6.1-2.7" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-6.1-3">If an implementation allows any of these operations to bypass membrane checks, it is not compliant with governed profiles.<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="decision-surface">
+<section id="section-6.2">
+        <h3 id="name-decision-surface">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-decision-surface" class="section-name selfRef">Decision Surface</a>
+        </h3>
+<p id="section-6.2-1">Membrane decisions MUST expose at least three outcomes:<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-6.2-2.1">
+            <code>allow</code><a href="#section-6.2-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.2-2.2">
+            <code>deny</code><a href="#section-6.2-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.2-2.3">
+            <code>escalate</code><a href="#section-6.2-2.3" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-6.2-3"><code>escalate</code> indicates that local runtime authority is insufficient and an external approval or higher-level policy decision is required.<a href="#section-6.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="decision-record">
+<section id="section-6.3">
+        <h3 id="name-decision-record">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-decision-record" class="section-name selfRef">Decision Record</a>
+        </h3>
+<p id="section-6.3-1">Each membrane-mediated decision MUST make available:<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-6.3-2.1">
+            <code>decision</code><a href="#section-6.3-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.3-2.2">
+            <code>request_id</code><a href="#section-6.3-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.3-2.3">
+            <code>policy_version</code><a href="#section-6.3-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.3-2.4">
+            <code>reason_code</code><a href="#section-6.3-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.3-2.5">
+            <code>budget_context</code><a href="#section-6.3-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-6.3-2.6">
+            <code>capability_basis</code><a href="#section-6.3-2.6" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-6.3-3">An implementation SHOULD expose this through a stable <code>membrane_decision_record</code> schema rather than through framework-local logging formats.<a href="#section-6.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="budget-interaction">
+<section id="section-6.4">
+        <h3 id="name-budget-interaction">
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-budget-interaction" class="section-name selfRef">Budget Interaction</a>
+        </h3>
+<p id="section-6.4-1">Budget exhaustion MUST be visible to membrane decisions. An exhausted zone MUST NOT continue infinite spawn or refinement as if the runtime had no control surface. If an implementation supports effect quotas or publication limits, exhaustion of those limits MUST likewise be visible to membrane decisions.<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+<p id="section-6.4-2">If an implementation supports multiple actors within one partition, budget and admission state SHOULD remain interpretable at that partition-local expansion boundary rather than only at whole-zone granularity.<a href="#section-6.4-2" class="pilcrow">¶</a></p>
+<p id="section-6.4-3">Deferral due to budget or capacity pressure MUST remain distinguishable from execution failure. A runtime MUST NOT collapse <code>budget_exhausted</code>, queued, or deferred conditions into terminal actor failure unless an execution actually ran and failed.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="artifact-provenance-and-replay-semantics">
+<section id="section-7">
+      <h2 id="name-artifact-provenance-and-rep">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-artifact-provenance-and-rep" class="section-name selfRef">Artifact, Provenance, and Replay Semantics</a>
+      </h2>
+<p id="section-7-1">APSIX is not only about actor lifecycle. It is also about stable artifact handling and authoritative replay.<a href="#section-7-1" class="pilcrow">¶</a></p>
+<div id="artifact-lifecycle">
+<section id="section-7.1">
+        <h3 id="name-artifact-lifecycle">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-artifact-lifecycle" class="section-name selfRef">Artifact Lifecycle</a>
+        </h3>
+<p id="section-7.1-1">An implementation MUST support a lifecycle in which artifacts are at minimum:<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="compact type-1" id="section-7.1-2">
+<li id="section-7.1-2.1">generated<a href="#section-7.1-2.1" class="pilcrow">¶</a>
+</li>
+          <li id="section-7.1-2.2">optionally anchored<a href="#section-7.1-2.2" class="pilcrow">¶</a>
+</li>
+          <li id="section-7.1-2.3">optionally harvested<a href="#section-7.1-2.3" class="pilcrow">¶</a>
+</li>
+        </ol>
+<p id="section-7.1-3">If an implementation distinguishes between partition-local candidate outputs and authoritative final outputs, that distinction SHOULD remain explicit in artifact type, lifecycle state, or equivalent durable metadata.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="provenance">
+<section id="section-7.2">
+        <h3 id="name-provenance">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-provenance" class="section-name selfRef">Provenance</a>
+        </h3>
+<p id="section-7.2-1">Anchored artifacts MUST preserve enough provenance to answer:<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-7.2-2.1">which actor produced this artifact;<a href="#section-7.2-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.2-2.2">in which zone;<a href="#section-7.2-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.2-2.3">over which partition scope;<a href="#section-7.2-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.2-2.4">under which capability;<a href="#section-7.2-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.2-2.5">from which input references;<a href="#section-7.2-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.2-2.6">under which membrane decision context.<a href="#section-7.2-2.6" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-7.2-3">At minimum, an anchored artifact SHOULD be portable together with:<a href="#section-7.2-3" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-7.2-4.1">its <code>anchor_record</code>;<a href="#section-7.2-4.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.2-4.2">the originating <code>membrane_decision_record</code>;<a href="#section-7.2-4.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.2-4.3">referenced input artifacts or scope identifiers.<a href="#section-7.2-4.3" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-7.2-5">If an anchored artifact is the basis for an external effect, the runtime SHOULD preserve a portable reference to the effect decision and effect outcome record as well.<a href="#section-7.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="replay-contract">
+<section id="section-7.3">
+        <h3 id="name-replay-contract">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-replay-contract" class="section-name selfRef">Replay Contract</a>
+        </h3>
+<p id="section-7.3-1">An implementation MUST support authoritative reconstruction of zone state from:<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-7.3-2.1">ordered events;<a href="#section-7.3-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.3-2.2">membrane decision records;<a href="#section-7.3-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.3-2.3">anchored artifacts;<a href="#section-7.3-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.3-2.4">run records, if runs are exposed separately from actors;<a href="#section-7.3-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.3-2.5">policy version history;<a href="#section-7.3-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.3-2.6">budget and lifecycle checkpoints, if such checkpoints are used.<a href="#section-7.3-2.6" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-7.3-3">Replay MUST reconstruct authoritative runtime state. It MUST NOT be interpreted as a requirement to reproduce original latent reasoning traces.<a href="#section-7.3-3" class="pilcrow">¶</a></p>
+<p id="section-7.3-4">For portability, replay-relevant records MUST be serializable through stable schemas rather than through implementation-specific debug logs alone.<a href="#section-7.3-4" class="pilcrow">¶</a></p>
+<p id="section-7.3-5">If replay-relevant data is split across multiple ledgers, replay MUST reconstruct a single authoritative order across them.<a href="#section-7.3-5" class="pilcrow">¶</a></p>
+<p id="section-7.3-6">When actor executions are cancelled, aborted, or otherwise force-terminated, replay MUST reconstruct those executions as terminal outcomes rather than as still-live runtime activity.<a href="#section-7.3-6" class="pilcrow">¶</a></p>
+<p id="section-7.3-7">When execution is interrupted by runtime restart, process disappearance, or other loss of live actor state, a governed or replayable runtime SHOULD normalize the affected execution into a terminal, recovered, or requeued state rather than leaving authoritative state ambiguous.<a href="#section-7.3-7" class="pilcrow">¶</a></p>
+<p id="section-7.3-8">If an implementation supports within-partition actor populations, replay SHOULD also reconstruct the effective spawn regime and lineage context sufficiently to distinguish bounded exploration from uncontrolled epidemic expansion.<a href="#section-7.3-8" class="pilcrow">¶</a></p>
+<p id="section-7.3-9">If an implementation exposes operator-facing projections or planning views in addition to authoritative zone state, replay MUST treat those views as derived artifacts rather than as independent authoritative inputs.<a href="#section-7.3-9" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="no-silent-promotion">
+<section id="section-7.4">
+        <h3 id="name-no-silent-promotion">
+<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-no-silent-promotion" class="section-name selfRef">No Silent Promotion</a>
+        </h3>
+<p id="section-7.4-1">An implementation MUST NOT treat generated output as anchored by default unless generation and anchoring are explicitly collapsed into one documented primitive.<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="measurement-convention">
+<section id="section-7.5">
+        <h3 id="name-measurement-convention">
+<a href="#section-7.5" class="section-number selfRef">7.5. </a><a href="#name-measurement-convention" class="section-name selfRef">Measurement Convention</a>
+        </h3>
+<p id="section-7.5-1">If an implementation exposes runtime telemetry, proxy metrics, or derived analytical surfaces in addition to the core APSIX objects, it SHOULD expose a stable measurement convention describing:<a href="#section-7.5-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-7.5-2.1">which records or state surfaces are treated as measurement inputs;<a href="#section-7.5-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.5-2.2">whether metrics are direct runtime variables or deployment-specific proxies;<a href="#section-7.5-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.5-2.3">what aggregation horizon or windowing assumptions apply;<a href="#section-7.5-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-7.5-2.4">what runtime profile or workload regime the measurements are valid for.<a href="#section-7.5-2.4" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-7.5-3">Implementations MAY expose population metrics describing actor population size, spawn rate, partition-local population distribution, or other indicators useful for detecting uncontrolled expansion regimes.<a href="#section-7.5-3" class="pilcrow">¶</a></p>
+<p id="section-7.5-4">If such metrics are used to support replayable analysis, comparison across zones, or theory-mapping claims, <code>APSIX-replayable</code> implementations SHOULD make that measurement convention visible through a stable manifest, report schema, or equivalent replay-relevant surface.<a href="#section-7.5-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="error-model">
+<section id="section-8">
+      <h2 id="name-error-model">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-error-model" class="section-name selfRef">Error Model</a>
+      </h2>
+<p id="section-8-1">Primitive failures SHOULD be structured rather than opaque.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-2">Recommended error classes:<a href="#section-8-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-8-3.1">
+          <code>policy_denied</code><a href="#section-8-3.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.2">
+          <code>budget_exhausted</code><a href="#section-8-3.2" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.3">
+          <code>unknown_zone</code><a href="#section-8-3.3" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.4">
+          <code>unknown_actor</code><a href="#section-8-3.4" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.5">
+          <code>unknown_artifact</code><a href="#section-8-3.5" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.6">
+          <code>unknown_partition</code><a href="#section-8-3.6" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.7">
+          <code>capability_denied</code><a href="#section-8-3.7" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.8">
+          <code>invalid_transition</code><a href="#section-8-3.8" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.9">
+          <code>effect_denied</code><a href="#section-8-3.9" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.10">
+          <code>requires_escalation</code><a href="#section-8-3.10" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.11">
+          <code>replay_unavailable</code><a href="#section-8-3.11" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.12">
+          <code>aborted</code><a href="#section-8-3.12" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-8-3.13">
+          <code>cancelled</code><a href="#section-8-3.13" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-8-4">When <code>observe(zone_id)</code> is implemented, the runtime SHOULD make these errors observable through it. <code>APSIX-governed</code> and <code>APSIX-replayable</code> profiles MUST do so.<a href="#section-8-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="compliance-profiles">
+<section id="section-9">
+      <h2 id="name-compliance-profiles">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-compliance-profiles" class="section-name selfRef">Compliance Profiles</a>
+      </h2>
+<p id="section-9-1">This document defines three progressive profiles.<a href="#section-9-1" class="pilcrow">¶</a></p>
+<div id="apsix-core">
+<section id="section-9.1">
+        <h3 id="name-apsix-core">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-apsix-core" class="section-name selfRef"><code>APSIX-core</code></a>
+        </h3>
+<p id="section-9.1-1">Requires:<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-9.1-2.1">
+            <code>zone</code><a href="#section-9.1-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.1-2.2">
+            <code>refine</code><a href="#section-9.1-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.1-2.3">
+            <code>spawn</code><a href="#section-9.1-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.1-2.4">
+            <code>execute</code><a href="#section-9.1-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.1-2.5">
+            <code>anchor</code><a href="#section-9.1-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.1-2.6">
+            <code>harvest</code><a href="#section-9.1-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.1-2.7">
+            <code>freeze</code><a href="#section-9.1-2.7" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-9.1-3">This profile is the minimal portable primitive surface.<a href="#section-9.1-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="apsix-governed">
+<section id="section-9.2">
+        <h3 id="name-apsix-governed">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-apsix-governed" class="section-name selfRef"><code>APSIX-governed</code></a>
+        </h3>
+<p id="section-9.2-1">Requires all <code>APSIX-core</code> primitives plus:<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-9.2-2.1">
+            <code>observe</code><a href="#section-9.2-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.2-2.2">membrane-mediated spawn<a href="#section-9.2-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.2-2.3">membrane-mediated refine for policy-sensitive scope changes<a href="#section-9.2-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.2-2.4">membrane-mediated external or cross-boundary effects, if the runtime supports them<a href="#section-9.2-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.2-2.5">membrane-mediated anchor<a href="#section-9.2-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.2-2.6">explicit budget handling<a href="#section-9.2-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.2-2.7">decision records with reason codes<a href="#section-9.2-2.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.2-2.8">stable membrane decision records<a href="#section-9.2-2.8" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.2-2.9">stable request correlation across membrane-mediated lifecycle transitions<a href="#section-9.2-2.9" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-9.2-3">This profile is the minimum useful profile for real spawn governance.<a href="#section-9.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="apsix-replayable">
+<section id="section-9.3">
+        <h3 id="name-apsix-replayable">
+<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-apsix-replayable" class="section-name selfRef"><code>APSIX-replayable</code></a>
+        </h3>
+<p id="section-9.3-1">Requires all <code>APSIX-governed</code> features plus:<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-9.3-2.1">partition-visible locality semantics<a href="#section-9.3-2.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.2">artifact provenance<a href="#section-9.3-2.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.3">explicit run records or equivalent execution-attempt visibility<a href="#section-9.3-2.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.4">stable anchor records<a href="#section-9.3-2.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.5">ordered event exposure<a href="#section-9.3-2.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.6">stable event records<a href="#section-9.3-2.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.7">stable cross-ledger ordering semantics<a href="#section-9.3-2.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.8">ledger manifest or equivalent replay surface description<a href="#section-9.3-2.8" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.9">policy version visibility<a href="#section-9.3-2.9" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.10">authoritative replay support<a href="#section-9.3-2.10" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.3-2.11">measurement convention visibility, if runtime telemetry proxies are exposed<a href="#section-9.3-2.11" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-9.3-3">This profile is the recommended basis for research and auditable production systems.<a href="#section-9.3-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="conformance-guidance">
+<section id="section-9.4">
+        <h3 id="name-conformance-guidance">
+<a href="#section-9.4" class="section-number selfRef">9.4. </a><a href="#name-conformance-guidance" class="section-name selfRef">Conformance Guidance</a>
+        </h3>
+<p id="section-9.4-1">Primitive presence alone is insufficient to establish meaningful APSIX conformance.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
+<p id="section-9.4-2">Recommended conformance evaluation SHOULD additionally check:<a href="#section-9.4-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-9.4-3.1">lifecycle ordering invariants across <code>zone</code>, <code>spawn</code>, <code>execute</code>, <code>anchor</code>, <code>harvest</code>, and <code>freeze</code>;<a href="#section-9.4-3.1" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.4-3.2">request/decision/run correlation integrity where those surfaces are exposed;<a href="#section-9.4-3.2" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.4-3.3">preservation of authoritative cross-ledger ordering semantics;<a href="#section-9.4-3.3" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.4-3.4">absence of silent promotion from generated to anchored state;<a href="#section-9.4-3.4" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.4-3.5">explicit separation between candidate-local artifact surfaces and harvested authoritative output surfaces, when both exist;<a href="#section-9.4-3.5" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.4-3.6">distinction between deferred/queued conditions and terminal execution failure;<a href="#section-9.4-3.6" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.4-3.7">normalization of interrupted executions into terminal, recovered, or requeued authoritative states;<a href="#section-9.4-3.7" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.4-3.8">preservation of locality-scoped spawn control when multiple actors per partition are supported;<a href="#section-9.4-3.8" class="pilcrow">¶</a>
+</li>
+          <li class="compact" id="section-9.4-3.9">consistency between authoritative zone state and exposed event or decision ledgers.<a href="#section-9.4-3.9" class="pilcrow">¶</a>
+</li>
+        </ul>
+<p id="section-9.4-4">Implementations MAY satisfy these checks through scenario traces, replay fixtures, or other stable lifecycle test surfaces rather than only through isolated primitive-level tests.<a href="#section-9.4-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="mapping-to-concrete-runtimes">
+<section id="section-10">
+      <h2 id="name-mapping-to-concrete-runtime">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-mapping-to-concrete-runtime" class="section-name selfRef">Mapping to Concrete Runtimes</a>
+      </h2>
+<p id="section-10-1">APSIX does not mandate a specific implementation style.<a href="#section-10-1" class="pilcrow">¶</a></p>
+<p id="section-10-2">Examples:<a href="#section-10-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-10-3.1">a content-spawn runtime could treat each source idea as one zone and each channel draft as a harvestable artifact family;<a href="#section-10-3.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-10-3.2">a software runtime could treat bounded codebase areas as zones and patches or test reports as artifacts;<a href="#section-10-3.2" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-10-3.3">a research runtime could treat a literature field as a zone and claim-evidence memos as anchored artifacts.<a href="#section-10-3.3" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-10-4">What matters is not the domain itself, but whether the runtime exposes the primitives, locality semantics, membrane decisions, and replay obligations coherently.<a href="#section-10-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="non-goals">
+<section id="section-11">
+      <h2 id="name-non-goals">
+<a href="#section-11" class="section-number selfRef">11. </a><a href="#name-non-goals" class="section-name selfRef">Non-Goals</a>
+      </h2>
+<p id="section-11-1">APSIX does not attempt to standardize:<a href="#section-11-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-11-2.1">chain-of-thought formats;<a href="#section-11-2.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-11-2.2">inter-model competition protocols;<a href="#section-11-2.2" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-11-2.3">persona taxonomies;<a href="#section-11-2.3" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-11-2.4">benchmark task schemas;<a href="#section-11-2.4" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-11-2.5">human-interface conventions;<a href="#section-11-2.5" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-11-2.6">internal scheduler algorithms;<a href="#section-11-2.6" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-11-2.7">concrete effect transports or publication APIs;<a href="#section-11-2.7" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-11-2.8">storage and graph-engine implementations.<a href="#section-11-2.8" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-11-3">Those may exist above or below the APSIX layer, but they are not part of the core contract.<a href="#section-11-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="open-issues">
+<section id="section-12">
+      <h2 id="name-open-issues">
+<a href="#section-12" class="section-number selfRef">12. </a><a href="#name-open-issues" class="section-name selfRef">Open Issues</a>
+      </h2>
+<p id="section-12-1">Several questions remain open for later versions:<a href="#section-12-1" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-12-2.1">whether cross-zone <code>merge()</code> belongs in an extension set;<a href="#section-12-2.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-12-2.2">whether an explicit <code>effect()</code> primitive should remain derived from <code>execute()</code> plus membrane policy or become standardized;<a href="#section-12-2.2" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-12-2.3">what minimum provenance fields are sufficient for strong auditability;<a href="#section-12-2.3" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-12-2.4">whether event, anchor, and membrane decision schemas should be versioned independently or under one runtime schema version;<a href="#section-12-2.4" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-12-2.5">how replay semantics should interact with distributed asynchronous runtimes;<a href="#section-12-2.5" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-12-2.6">whether an explicit <code>checkpoint()</code> primitive should remain derived or become standardized;<a href="#section-12-2.6" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-12-2.7">whether <code>Run</code> should remain a logical object or become a first-class primitive argument surface;<a href="#section-12-2.7" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-12-2.8">whether output-boundary drift detection should become mandatory in governed profiles or remain a replayable-profile recommendation.<a href="#section-12-2.8" class="pilcrow">¶</a>
+</li>
+      </ul>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-13">
+      <h2 id="name-security-considerations">
+<a href="#section-13" class="section-number selfRef">13. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-13-1">APSIX defines a governance surface for spawn-capable semantic runtimes. As a result, security and governance failures in an APSIX implementation are not limited to data exposure; they can also alter population growth, artifact promotion, and cross-boundary effects.<a href="#section-13-1" class="pilcrow">¶</a></p>
+<p id="section-13-2">Improper membrane policy configuration, incomplete mediation, or weak audit surfaces may lead to:<a href="#section-13-2" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-13-3.1">uncontrolled actor population expansion;<a href="#section-13-3.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-3.2">artifact promotion of unverified or policy-incompatible outputs;<a href="#section-13-3.2" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-3.3">cross-boundary effect escalation without sufficient auditability;<a href="#section-13-3.3" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-3.4">replay gaps that prevent authoritative reconstruction of sensitive decisions;<a href="#section-13-3.4" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-3.5">policy drift between authoritative zone state and exposed event or decision records.<a href="#section-13-3.5" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-13-4">Implementations SHOULD ensure that membrane policies enforce:<a href="#section-13-4" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-13-5.1">strict admission control for actor creation and policy-sensitive refinement;<a href="#section-13-5.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-5.2">explicit artifact validation prior to anchoring;<a href="#section-13-5.2" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-5.3">auditable decision records for cross-boundary effects;<a href="#section-13-5.3" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-5.4">protection of authoritative ordering and replay-relevant ledgers against silent tampering or divergence;<a href="#section-13-5.4" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-5.5">clear separation between generated, anchored, and harvested artifact states.<a href="#section-13-5.5" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-13-6">Implementations supporting external effects SHOULD additionally ensure that:<a href="#section-13-6" class="pilcrow">¶</a></p>
+<ul class="compact">
+<li class="compact" id="section-13-7.1">escalation paths are authenticated and authorization boundaries are explicit;<a href="#section-13-7.1" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-7.2">effect completion is recorded as a durable auditable outcome;<a href="#section-13-7.2" class="pilcrow">¶</a>
+</li>
+        <li class="compact" id="section-13-7.3">cancelled, aborted, or partially completed effects are not presented as successful state transitions.<a href="#section-13-7.3" class="pilcrow">¶</a>
+</li>
+      </ul>
+<p id="section-13-8">Failure to enforce these constraints may result in loss of governance over semantic expansion within a zone and may permit unauthorized external actions to appear compliant in operator-facing views.<a href="#section-13-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="iana-considerations">
+<section id="section-14">
+      <h2 id="name-iana-considerations">
+<a href="#section-14" class="section-number selfRef">14. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-14-1">This document has no IANA actions.<a href="#section-14-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="references">
+<section id="section-15">
+      <h2 id="name-references">
+<a href="#section-15" class="section-number selfRef">15. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="normative-references">
+<section id="section-15.1">
+        <h3 id="name-normative-references">
+<a href="#section-15.1" class="section-number selfRef">15.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<p id="section-15.1-1">[RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+           Requirement Levels", BCP 14, RFC 2119,
+           DOI 10.17487/RFC2119, March 1997.<a href="#section-15.1-1" class="pilcrow">¶</a></p>
+<p id="section-15.1-2">[RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in
+           RFC 2119 Key Words", BCP 14, RFC 8174,
+           DOI 10.17487/RFC8174, May 2017.<a href="#section-15.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="conclusion">
+<section id="section-16">
+      <h2 id="name-conclusion">
+<a href="#section-16" class="section-number selfRef">16. </a><a href="#name-conclusion" class="section-name selfRef">Conclusion</a>
+      </h2>
+<p id="section-16-1">APSIX is a proposal for a minimal primitive contract for portable semantic runtimes. Its central claim is that the portable layer should standardize zone, membrane, run, artifact, locality, and replay operations rather than framework-local agent behaviors.<a href="#section-16-1" class="pilcrow">¶</a></p>
+<p id="section-16-2">If this direction is useful, higher-level runtimes and applications can target a stable substrate of zones, spawn, refinement, execution runs, anchoring, harvest, membrane decisions, and replayable authoritative state. That would move the field one step away from ad hoc orchestration and one step closer to real runtime portability.<a href="#section-16-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>
